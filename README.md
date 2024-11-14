@@ -1,6 +1,8 @@
-# Carbon: Rebuilt
-## The better sequel to CarbonDF
-### Made by GaMeNu
+<h1 align="center">Carbon: Rebuilt</h1>
+
+<h2 align="center">The better sequel to CarbonDF</h2>
+
+<h3>Made by GaMeNu</h3>
 
 Hello! Welcome to Carbon: Rebuilt's GitHub page! This is a complete remake, from the ground up, of CarbonDF.
 
