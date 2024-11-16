@@ -1,7 +1,7 @@
 package me.gamenu.carbondf.values;
 
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
-import me.gamenu.carbondf.exceptions.TypeMismatchException;
+import me.gamenu.carbondf.exceptions.TypeException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
@@ -39,7 +39,7 @@ public class DFParameter extends DFItem {
         /**
          * The type of the parameter
          */
-        Type type;
+        Type paramType;
 
         /**
          * The description of the parameter
@@ -99,7 +99,7 @@ public class DFParameter extends DFItem {
                 throw new InvalidFieldException("Cannot set the parameter type to " + type);
 
             this.name = name;
-            this.type = type;
+            this.paramType = type;
             this.plural = false;
             this.optional = false;
             this.returned = false;
@@ -201,24 +201,35 @@ public class DFParameter extends DFItem {
                     throw new InvalidFieldException("Returned parameters cannot have a default value");
 
                 // Check if the param's type is qualified for a default value at all
-                if (Arrays.stream(INVALID_DEFAULT_VALUE_TYPES).anyMatch(value -> value.equals(this.type)))
-                    throw new InvalidFieldException("Default values cannot be added to type " + this.type);
+                if (Arrays.stream(INVALID_DEFAULT_VALUE_TYPES).anyMatch(value -> value.equals(this.paramType)))
+                    throw new InvalidFieldException("Default values cannot be added to type " + this.paramType);
 
                 // Check if the param is optional AND not plural
                 if (!this.optional || this.plural)
                     throw new InvalidFieldException("Default values can only be added to optional, non-plural parameters");
 
-                if (!type.canAcceptType(defaultValue.getType()))
-                    throw new TypeMismatchException("Parameter type " + type + " cannot accept default value of type " + defaultValue.getType());
+                if (!paramType.canAcceptType(defaultValue.getType()))
+                    throw new TypeException("Parameter type " + paramType + " cannot accept default value of type " + defaultValue.getType());
             }
 
+            // Check whether this is a valid return param.
+            // Return params must be singular and required
             if (this.returned && (this.plural || this.optional)) {
                 throw new InvalidFieldException("Returned parameters cannot be optional or plural");
             }
 
 
 
-            return new DFParameter(name, description, type, plural, optional, returned, defaultValue);
+            return new DFParameter(
+                    name,
+                    description,
+                    paramType,
+                    plural,
+                    optional,
+                    returned,
+                    typeChecked,
+                    defaultValue
+            );
         }
 
 
@@ -226,7 +237,7 @@ public class DFParameter extends DFItem {
 
     String name;
     String description;
-    Type type;
+    Type paramType;
 
     boolean plural;
     boolean optional;
@@ -247,7 +258,7 @@ public class DFParameter extends DFItem {
         super(Type.PARAMETER);
         this.name = name;
         this.description = description;
-        this.type = type;
+        this.paramType = type;
         this.plural = plural;
         this.optional = optional;
         this.returned = returned;
@@ -258,21 +269,20 @@ public class DFParameter extends DFItem {
     /**
      * This method returns the parameter's matching variable.
      *
-     * @implNote The returned variable will be value-less
-     * @return
+     * @return the matching variable for this parameter
      */
     public DFVariable buildVariable() {
-
+        if (typeChecked) return DFVariable.typed(name, DFVariable.Scope.LINE, paramType);
+        else return DFVariable.dynamic(name, DFVariable.Scope.LINE, paramType);
     }
 
-    @Override
-    public Type getType() {
-        return type;
+    public Type getParamType() {
+        return paramType;
     }
 
     public Type getRealType() {
         if (returned) return Type.VARIABLE;
-        return type;
+        return paramType;
     }
 
     @Override

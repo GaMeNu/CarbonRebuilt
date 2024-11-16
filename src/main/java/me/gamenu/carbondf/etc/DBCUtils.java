@@ -9,9 +9,10 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ADUtils {
+public class DBCUtils {
     public static final JSONObject DBC;
     public static final Map<String, String> CBNameToIdentifier = new HashMap<>();
+    public static final Map<String, JSONObject> particleMap = new HashMap<>();
 
     static {
         try {
@@ -20,6 +21,11 @@ public class ADUtils {
             throw new RuntimeException(e);
         }
 
+        initCBMap();
+        initParticleMap();
+    }
+
+    private static void initCBMap() {
         JSONArray codeBlocks = DBC.getJSONArray("codeblocks");
         for (Object o: codeBlocks){
             JSONObject cb = (JSONObject) o;
@@ -27,5 +33,12 @@ public class ADUtils {
             String identifier = cb.getString("identifier");
             CBNameToIdentifier.put(name, identifier);
         }
+    }
+
+    private static void initParticleMap() {
+        for (Object oPart : DBC.getJSONArray("particles")) {
+            JSONObject part = (JSONObject) oPart;
+            particleMap.put(part.getString("particle"), part);
+         }
     }
 }

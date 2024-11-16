@@ -1,5 +1,6 @@
 package me.gamenu.carbondf.values;
 
+import me.gamenu.carbondf.exceptions.TypeException;
 import org.json.JSONObject;
 
 public class DFVariable extends DFItem {
@@ -15,14 +16,12 @@ public class DFVariable extends DFItem {
     private final Scope scope;
 
     /**
-     * Current value of the variable
+     * Type of the current variable's value
      */
-    private DFItem value;
-
-    private Type type;
+    private Type valueType;
 
     /**
-     * Whether this variable's type is enforced (strongly typed)
+     * Indicates whether this variable is a constant, strongly typed, or weakly typed.
      */
     private final VarKind varKind;
 
@@ -30,50 +29,42 @@ public class DFVariable extends DFItem {
      * Create a new constant variable
      * @param name name of the constant
      * @param scope scope of the constant
-     * @param value value of the constant
+     * @param type type of the constant
      * @return the newly created variable
      */
-    public static DFVariable constant(String name, Scope scope, DFItem value) {
-        return new DFVariable(name, scope, value, VarKind.CONSTANT);
+    public static DFVariable constant(String name, Scope scope, Type type) {
+        return new DFVariable(name, scope, type, VarKind.CONSTANT);
     }
 
     /**
      * Create a new type-checked (strongly typed) variable
      * @param name name of the variable
      * @param scope scope of the variable
-     * @param value value of the variable
+     * @param type type of the variable
      * @return the newly created variable
      */
-    public static DFVariable typed(String name, Scope scope, DFItem value) {
-        return new DFVariable(name, scope, value, VarKind.TYPED);
+    public static DFVariable typed(String name, Scope scope, Type type) {
+        return new DFVariable(name, scope, type, VarKind.TYPED);
     }
 
     /**
-     * Instantiate a new mutable variable with a name
-     * @param name name of the variable to be created
-     */
-    public static DFVariable mutable(String name) {
-        return mutable(name, Scope.GLOBAL);
-    }
-
-    /**
-     * Instantiate a new mutable variable
+     * Instantiate a new dynamic variable
      * @param name name of the variable
      * @param scope scope of the variable
      */
-    public static DFVariable mutable(String name, Scope scope) {
-        return mutable(name, scope, null);
+    public static DFVariable dynamic(String name, Scope scope) {
+        return dynamic(name, scope, null);
     }
 
-    public static DFVariable mutable(String name, Scope scope, DFItem value) {
-        return new DFVariable(name, scope, value, VarKind.MUTABLE);
+    public static DFVariable dynamic(String name, Scope scope, Type type) {
+        return new DFVariable(name, scope, type, VarKind.DYNAMIC);
     }
 
-    private DFVariable(String name, Scope scope, DFItem value, VarKind kind) {
+    public DFVariable(String name, Scope scope, Type type, VarKind kind) {
         super(Type.VARIABLE);
         this.name = name;
         this.scope = scope;
-        this.value = value;
+        this.valueType = type;
         this.varKind = kind;
     }
 
@@ -88,23 +79,25 @@ public class DFVariable extends DFItem {
     /**
      * Set the variable's internal value. This is NOT the same as the SetVariable DiamondFire Code Block, and will not create a corresponding CodeBlock either.
      * @param newValue internal value to set
-     * @return
+     * @return this
      */
     public DFVariable setValue(DFItem newValue) {
-        this.value = newValue;
+        if (varKind == VarKind.CONSTANT)
+            throw new TypeException("Cannot set a value on a constant variable");
+
+        if (varKind == VarKind.TYPED && valueType != Type.ANY) {
+            if (valueType != newValue.getType())
+                throw new TypeException("Cannot assign value of type " + newValue.getType() + " to a variable of type " + valueType);
+        }
+
+        if (varKind != VarKind.TYPED)
+            this.valueType = newValue.getType();
         return this;
     }
 
-    public DFItem getValue() {
-        return value;
-    }
-
     public Type getValueType() {
-        return value.getType();
+        return valueType;
     }
-
-
-
 
     @Override
     public JSONObject toJSON() {
@@ -135,7 +128,7 @@ public class DFVariable extends DFItem {
     }
 
     public enum VarKind {
-        MUTABLE,
+        DYNAMIC,
         TYPED,
         CONSTANT
     }

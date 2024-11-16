@@ -1,6 +1,6 @@
 package me.gamenu.carbondf.actions;
 
-import me.gamenu.carbondf.etc.ADUtils;
+import me.gamenu.carbondf.etc.DBCUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -39,7 +39,7 @@ public class BlockType {
 
         JSONArray codeblocks;
 
-        codeblocks = ADUtils.DBC.getJSONArray("codeblocks");
+        codeblocks = DBCUtils.DBC.getJSONArray("codeblocks");
 
         for (Object o: codeblocks){
             JSONObject codeblock = (JSONObject) o;

@@ -5,7 +5,7 @@ import org.json.JSONObject;
 
 public abstract class DFItem implements ToJSONObject {
 
-    private Type type;
+    private final Type type;
 
     public DFItem(Type type){
         this.type = type;
@@ -13,7 +13,7 @@ public abstract class DFItem implements ToJSONObject {
 
     protected JSONObject createJSONFromData(JSONObject dataObj) {
         return new JSONObject()
-                .put("type", type.getId())
+                .put("id", type.getId())
                 .put("data", dataObj);
     }
 
