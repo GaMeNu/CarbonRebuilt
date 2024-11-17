@@ -6,25 +6,31 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.awt.*;
-import java.util.Arrays;
+import java.util.HashSet;
 
+/**
+ * This class represents a DiamondFire particle value
+ */
 public class DFParticle extends DFItem {
 
     // PARTICLE
     String particle;
 
-    private final String[] validFields;
+    // This is a HashSet to improve performance ( O(1) instead of O(n) iteration)
+    // Yes I KNOW this is premat. optim. but it's also for the sake fo consistency
+    // (am plannning to use HashSets for more things like potions and sounds)
+    private final HashSet<String> validFields;
 
     // cluster
     int amount;
-    double horizontalSpread; // V
-    double verticalSpread; // V
+    double horizontalSpread;
+    double verticalSpread;
 
-    DFMinecraftItem material; // V
+    DFMinecraftItem material;
 
     // motion
-    DFVector motion; // V
-    float motionVariation; // V
+    DFVector motion;
+    float motionVariation;
     double roll;
 
     // color
@@ -36,10 +42,21 @@ public class DFParticle extends DFItem {
     double size;
     float sizeVariation;
 
+    /**
+     * Create a basic DiamondFire particle
+     * @param particle particle's type
+     */
     public DFParticle(String particle) {
         this(particle, 1, 0, 0);
     }
 
+    /**
+     * Create a DiamondFire Particle
+     * @param particle particle's type
+     * @param amount amount of particles
+     * @param horizontalSpread horizontal spread of particles
+     * @param verticalSpread vertical spread of particles
+     */
     public DFParticle(String particle, int amount, double horizontalSpread, double verticalSpread) {
         super(Type.PARTICLE);
 
@@ -49,9 +66,9 @@ public class DFParticle extends DFItem {
             throw new InvalidFieldException("Particle name does not exist");
         JSONArray fieldsArr = particleJSON.getJSONArray("fields");
 
-        this.validFields = new String[fieldsArr.length()];
-        for (int i = 0; i < validFields.length; i++)
-            validFields[i] = fieldsArr.getString(i).trim();
+        this.validFields = new HashSet<>();
+        for (int i = 0; i < fieldsArr.length(); i++)
+            validFields.add(fieldsArr.getString(i).trim());
 
         // Init other attributes
         this.particle = particle;
@@ -72,70 +89,152 @@ public class DFParticle extends DFItem {
         if (hasField("Size Variation")) this.sizeVariation = 0F;
     }
 
+    /**
+     * Check if the field is valid for the current particle
+     * @param field field name to check for
+     * @return whether the field is valid
+     */
     private boolean hasField(String field) {
-        return Arrays.asList(this.validFields).contains(field);
+        return this.validFields.contains(field);
     }
 
+    /**
+     * Same as {@link #hasField(String field) hasField},
+     * but throws an {@link InvalidFieldException} if the field is invalid
+     * @param field field to check for
+     */
     private void assertField(String field) {
         if (!hasField(field))
             throw new InvalidFieldException("Particle " + particle + " does not support field " + field);
     }
 
+    private void assertVariationRange(float variation) {
+        if (variation < 0 || variation > 1)
+            throw new IllegalArgumentException("Variation must be between 0 and 1");
+    }
+    /**
+     * Sets the particle's spread
+     * @param horizontal horizontal spread
+     * @param vertical vertical spread
+     * @return this
+     */
     public DFParticle setSpread(double horizontal, double vertical) {
         this.horizontalSpread = horizontal;
         this.verticalSpread = vertical;
         return this;
     }
 
+    /**
+     * Sets the particle's material.<br/>
+     * Required particle field: <code>"Material"</code>
+     * @param material Material to set
+     * @return this
+     * @throws InvalidFieldException if the particle does not support the required field
+     */
     public DFParticle setMaterial(DFMinecraftItem material) {
         assertField("Material");
         this.material = material;
         return this;
     }
 
+    /**
+     * Sets the particle's motion direction.<br/>
+     * Required particle field: <code>"Motion"</code>
+     * @param motion Motion vector
+     * @return this
+     * @throws InvalidFieldException if the particle does not support the required field
+     */
     public DFParticle setMotion(DFVector motion) {
         assertField("Motion");
         this.motion = motion;
         return this;
     }
 
-    public DFParticle setMotionVariation(float motionVariation) {
+    /**
+     * Sets the particle's motion variation.<br/>
+     * Required particle field: <code>"Motion Variation"</code>
+     * @param variation Motion variation, between 0 and 1.
+     * @return this
+     * @throws InvalidFieldException if the particle does not support the required field
+     */
+    public DFParticle setMotionVariation(float variation) {
         assertField("Motion Variation");
-        this.motionVariation = motionVariation;
+        assertVariationRange(variation);
+        this.motionVariation = variation;
         return this;
     }
 
+    /**
+     * Sets the particle's roll.
+     * @param roll roll
+     * @return this
+     */
     public DFParticle setRoll(double roll) {
         this.roll = roll;
         return this;
     }
 
+    /**
+     * Sets the particle's color.<br/>
+     * Required particle field: <code>"Color"</code>
+     * @param color Particle's color
+     * @return this
+     * @throws InvalidFieldException if the particle does not support the required field
+     */
     public DFParticle setColor(Color color) {
         assertField("Color");
         this.color = color;
         return this;
     }
 
-    public DFParticle setColorVariation(float colorVariation) {
+    /**
+     * Sets the particle's variation.<br/>
+     * Required particle field: <code>"Color Variation"</code>
+     * @param variation Color variation, between 0 and 1
+     * @return this
+     * @throws InvalidFieldException if the particle does not support the required field
+     */
+    public DFParticle setColorVariation(float variation) {
         assertField("Color Variation");
-        this.colorVariation = colorVariation;
+        assertVariationRange(variation);
+        this.colorVariation = variation;
         return this;
     }
 
+    /**
+     * Sets the particle's fade color.
+     * @param fadeColor Fade color
+     * @return this
+     */
     public DFParticle setFadeColor(Color fadeColor) {
         this.fadeColor = fadeColor;
         return this;
     }
 
+    /**
+     * Sets the particle's size.<br/>
+     * Required particle field: <code>"Size"</code>
+     * @param size Particle's size
+     * @return this
+     * @throws InvalidFieldException if the particle does not support the required field
+     */
     public DFParticle setSize(double size) {
         assertField("Size");
         this.size = size;
         return this;
     }
 
-    public DFParticle setSizeVariation(float sizeVariation) {
+    /**
+     * Sets the particle's size variation.<br/>
+     * Required particle field: <code>"Size Variation"</code>
+     * @param variation Size variation, between 0 and 1
+     * @return this
+     * @throws InvalidFieldException if the particle does not support the required field
+     */
+    public DFParticle setSizeVariation(float variation) {
         assertField("Size Variation");
-        this.sizeVariation = sizeVariation;
+        assertVariationRange(variation);
+        this.sizeVariation = variation;
         return this;
     }
 

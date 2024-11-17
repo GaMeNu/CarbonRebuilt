@@ -11,7 +11,7 @@ public class DFParameter extends DFItem {
     
 
     /**
-     * This class allows for building a DF Parameter
+     * Allows for building a DF Parameter
      */
     public static class Builder {
 
@@ -31,41 +31,30 @@ public class DFParameter extends DFItem {
                 Type.DICT
         };
 
-        /**
-         * The name of the parameter
-         */
+        /** The name of the parameter */
         String name;
 
-        /**
-         * The type of the parameter
-         */
+        /** The type of the parameter */
         Type paramType;
 
-        /**
-         * The description of the parameter
-         */
+        /** The description of the parameter */
         String description;
 
-        /**
-         * Whether this variable contains multiple values.
-         * If a param is plural, its type would be a LIST of the given type
-         */
+        /** Whether this variable contains multiple values. */
         boolean plural;
 
-        /**
-         * Whether this parameter is optional
-         */
+        /** Whether this parameter is optional */
         boolean optional;
 
         /**
          * Whether this is a return parameter, and not a normal parameter.
-         * Return parameter are of type VAR, and the VAR's type would be the given type
+         * Return parameter are of type VAR, and the variable's type would be the given type
          */
         boolean returned;
 
         /**
          * Whether this parameter should be type checked (Strongly typed).
-         * This value affects whether the variable built from this parameter will be strongly typed as well
+         * This value affects whether the variable built from this parameter will be strongly typed as well.
          */
         boolean typeChecked;
 
@@ -76,7 +65,7 @@ public class DFParameter extends DFItem {
         DFItem defaultValue;
 
         /**
-         * Create a new Parameter.Builder
+         * Creates a new Parameter Builder
          *
          * @param name The name of the parameter
          * @param type The type of the parameter (leave for a non type-checked parameter)
@@ -276,10 +265,23 @@ public class DFParameter extends DFItem {
         else return DFVariable.dynamic(name, DFVariable.Scope.LINE, paramType);
     }
 
+    /**
+     * Get the parameter's type
+     * @return the parameter's current type
+     */
     public Type getParamType() {
         return paramType;
     }
 
+    /**
+     * <p>
+     *   Get the parameter's real type. This is the type that will be on DiamondFire, without Carbon's abstractions
+     * </p>
+     * <p>
+     *   For example, a returned parameter's real type will be {@link DFItem.Type#VARIABLE VARIABLE}
+     * </p>
+     * @return the parameter's current real type
+     */
     public Type getRealType() {
         if (returned) return Type.VARIABLE;
         return paramType;
