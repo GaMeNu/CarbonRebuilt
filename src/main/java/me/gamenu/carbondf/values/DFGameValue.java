@@ -46,6 +46,31 @@ public class DFGameValue extends DFItem{
         returnType = Type.typeNames.get(returnTypeName);
     }
 
+    /**
+     * Get the current Game Value type
+     * @return the current Game Value type
+     */
+    public String getValueType() {
+        return valueType;
+    }
+
+    /**
+     * Get the Game Value's target
+     * @return the current Game Value target
+     */
+    public Target getTarget() {
+        return target;
+    }
+
+    /**
+     * Get the Game Value's return type
+     * @return the Game Value's type
+     */
+    public Type getReturnType() {
+        return returnType;
+    }
+
+
     @Override
     public JSONObject toJSON() {
         JSONObject data = new JSONObject()

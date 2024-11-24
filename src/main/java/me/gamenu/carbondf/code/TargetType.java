@@ -1,4 +1,4 @@
-package me.gamenu.carbondf.actions;
+package me.gamenu.carbondf.code;
 
 public enum TargetType {
     SELECTION("Selection"),

@@ -1,6 +1,7 @@
 package me.gamenu.carbondf.etc;
 
-import org.json.JSONArray;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -9,14 +10,31 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+/**
+ * This class contains utilities for interacting with data from the ActionDump.
+ * The class mostly consists of useful public maps and sets, that contain useful data for different objects and the such.
+ * Usually this data will be wrapped further behind a matching class or another map
+ */
 public class DBCUtils {
+    /** This is the ActionDump, loaded into memory and converted to a Java JSON Format*/
     public static final JSONObject DBC;
-    public static final Map<String, String> CBNameToIdentifier = new HashMap<>();
+    /** This is a Bi-Directional HashMap, containing all BlockTypes' names and identifiers, being able to switch between them. */
+    public static final BidiMap<String, String> codeBlockTypes = new DualHashBidiMap<>();
+    /** This is a Map containing all codeBlock IDs, and their matching Action types, by name.<br/>
+     * <code>Map< String codeBlockID, Map< String actionName, JSONObject actionData > ></code>
+     */
+    public static final Map<String, Map<String, JSONObject>> actionTypes = new HashMap<>();
+    /** This Map contains each particle's ID, and its associated data (in JSON format) */
     public static final Map<String, JSONObject> particleMap = new HashMap<>();
-    public static final HashSet<String> potionTypes = new HashSet<>();
-    public static final HashSet<String> soundTypes = new HashSet<>();
-    public static final HashMap<String, JSONObject> gameValuesMap = new HashMap<>();
+    /** This Set contains all valid Potion types */
+    public static final Set<String> potionTypes = new HashSet<>();
+    /** This Set contains all valid Sound types*/
+    public static final Set<String> soundTypes = new HashSet<>();
+    /** This Map contains each valid Game Value's name, and its associated data (in JSON format) */
+    public static final Map<String, JSONObject> gameValuesMap = new HashMap<>();
+
 
     /**
      * Remove colors from a DBC name that may contain colors
@@ -24,7 +42,7 @@ public class DBCUtils {
      * @return text without colors
      */
     public static String stripColors(String text) {
-        // Thanks DFOnline for the RegEx :+1:
+        // Thanks DFOnline for the RegEx :thumbsup:
         return text.replaceAll("(?i)[&§][\\dA-FK-ORX]", "");
     }
 
@@ -35,21 +53,13 @@ public class DBCUtils {
             throw new RuntimeException(e);
         }
 
-        initCBMap();
         initParticleMap();
         initPotionsSet();
         initSoundsSet();
         initGameValuesMap();
-    }
 
-    private static void initCBMap() {
-        JSONArray codeBlocks = DBC.getJSONArray("codeblocks");
-        for (Object o: codeBlocks){
-            JSONObject cb = (JSONObject) o;
-            String name = cb.getString("name");
-            String identifier = cb.getString("identifier");
-            CBNameToIdentifier.put(name, identifier);
-        }
+        initCodeBlockTypes();
+        initActionTypes();
     }
 
     private static void initParticleMap() {
@@ -77,6 +87,30 @@ public class DBCUtils {
         for (Object oGV : DBC.getJSONArray("gameValues")) {
             JSONObject gv = (JSONObject) oGV;
             gameValuesMap.put(stripColors(gv.getJSONObject("icon").getString("name")), gv);
+        }
+    }
+
+    private static void initCodeBlockTypes() {
+        for (Object oCB : DBC.getJSONArray("codeblocks")) {
+            JSONObject cb = (JSONObject) oCB;
+            codeBlockTypes.put(cb.getString("identifier"), cb.getString("name"));
+        }
+    }
+
+    private static void initActionTypes() {
+        for (Object oAT : DBC.getJSONArray("actions")) {
+            JSONObject at = (JSONObject) oAT;
+            // Prep codeBlock ID
+            String cbID = codeBlockTypes.inverseBidiMap().get(at.getString("codeblockName"));
+            // Prep action name)]
+            String actionName = at.getString("name");
+
+            // Create key if it does not exist
+            if (!actionTypes.containsKey(cbID))
+                actionTypes.put(cbID, new HashMap<>());
+
+            // Place the action data
+            actionTypes.get(cbID).put(actionName, at);
         }
     }
 }

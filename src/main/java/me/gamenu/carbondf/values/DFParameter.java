@@ -287,6 +287,26 @@ public class DFParameter extends DFItem {
         return paramType;
     }
 
+    /**
+     * Whether this can accept the values of a certain item
+     * @param other item to check for
+     * @return whether the other item is acceptable
+     */
+    public boolean canAcceptItem(DFItem other) {
+        // Return parameters may only accept variables
+        if (this.returned) return other.getType() == Type.VARIABLE;
+
+        // Check if the other item is simply acceptable
+        if (this.getParamType().canAcceptType(other.getType())) return true;
+
+        // Check if the other's type is a game value with an acceptable RETURN type
+        if (other.getType() == Type.GAME_VALUE && other instanceof DFGameValue) {
+            return this.getParamType().canAcceptType(((DFGameValue) other).getReturnType());
+        }
+
+        return false;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject data = new JSONObject()

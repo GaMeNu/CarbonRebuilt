@@ -1,10 +1,8 @@
-package me.gamenu.carbondf.actions;
+package me.gamenu.carbondf.code;
 
 import me.gamenu.carbondf.etc.ToJSONObject;
 import me.gamenu.carbondf.values.DFItem;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
 
 /**
  * This class represents a single CodeBlock
@@ -12,9 +10,10 @@ import java.util.ArrayList;
 public class CodeBlock implements ToJSONObject {
     private BlockType block;
     private ActionType action;
-    private TargetType target;
+    private ActionType subAction;
+    private TargetType selection;
 
-    private ArrayList<DFItem> args;
+    private CodeBlockArgs<DFItem> args;
     private Attribute attribute;
 
     public CodeBlock(BlockType block, ActionType action) {
@@ -22,7 +21,6 @@ public class CodeBlock implements ToJSONObject {
     }
 
     public CodeBlock(BlockType block, ActionType action, TargetType target) {
-
     }
 
 
