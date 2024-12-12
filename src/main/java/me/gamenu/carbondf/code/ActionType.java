@@ -1,6 +1,8 @@
 package me.gamenu.carbondf.code;
 
 import me.gamenu.carbondf.etc.DBCUtils;
+import me.gamenu.carbondf.values.DFItem;
+import me.gamenu.carbondf.values.TypeSet;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -8,6 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a DiamondFire Action type
+ */
 public class ActionType {
     /** This is a map containing each {@link BlockType BlockType}'s matching ActionTypes, by their names*/
     public static Map<BlockType, Map<String, ActionType>> actionTypes;
@@ -18,7 +23,7 @@ public class ActionType {
      * @param name ActionType's name
      * @return the requested ActionType (null if not found)
      */
-    public static ActionType fromName(BlockType blockType, String name) {
+    public static ActionType getByName(BlockType blockType, String name) {
         Map<String, ActionType> cbActs = actionTypes.get(blockType);
         if (cbActs == null) return null;
         return cbActs.get(name);
@@ -30,48 +35,28 @@ public class ActionType {
      * @param name ActionType's name
      * @return the requested ActionType (null if not found)
      */
-    public static ActionType fromName(String blockID, String name) {
-        return fromName(BlockType.fromID(blockID), name);
+    public static ActionType getByName(String blockID, String name) {
+        return getByName(BlockType.getByID(blockID), name);
     }
 
     static {
         actionTypes = new HashMap<>();
         for (Map.Entry<String, Map<String, JSONObject>> blockActsEntry : DBCUtils.actionTypes.entrySet()) {
             // Current block type (original map is already sorted)
-            BlockType blockType = BlockType.fromID(blockActsEntry.getKey());
+            BlockType blockType = BlockType.getByID(blockActsEntry.getKey());
 
             actionTypes.put(blockType, new HashMap<>());
             for (Map.Entry<String, JSONObject> actEntry : blockActsEntry.getValue().entrySet()) {
                 JSONObject actionJSON = actEntry.getValue();
 
-                // Set ActionType's name
-                String name = actionJSON.getString("name");
-
-                // Set ActionType's matching codeblock
-                String blockName = actionJSON.getString("codeblockName");
-
-
-                // We are not sure whether the json even HAS the cancellable tag,
-                // so we check that first
-                boolean cancellable =
-                        actionJSON.has("cancellable")
-                        && actionJSON.getJSONObject("icon").getBoolean("cancellable");
-
-                // We are also not sure that sub-action blocks exist for this action
-                List<BlockType> subActionBlocks;
-                if (actionJSON.has("subActionBlocks")) {
-                    // Create the sub action blocks array list
-                    subActionBlocks = new ArrayList<>();
-
-                    for (Object oSBB : actEntry.getValue().getJSONArray("subActionBlocks")) {
-                        String sbbID = (String) oSBB;
-                        BlockType curBT = BlockType.fromID(sbbID);
-                        subActionBlocks.add(curBT);
-                    }
-                } else
-                    subActionBlocks = null;
-
-                ActionType at = new ActionType(name, blockType, cancellable, subActionBlocks);
+                ActionType at;
+                try {
+                    at = ActionType.fromJSON(actionJSON);
+                } catch (Exception e) {
+                    System.out.println(actionJSON.toString(2));
+                    throw e;
+                }
+                String name = at.getName();
 
                 actionTypes.get(blockType).put(name, at);
             }
@@ -83,6 +68,15 @@ public class ActionType {
     /** Action's matching {@link BlockType BlockType} */
     final BlockType blockType;
 
+    /*
+     * Action's overload-able arguments
+     * CANCELLED - The DF ActionDump standard is too complex for my smol brain (and I'm too lazy)
+     */
+    //List<List<DFParameter>> arguments;
+
+    /** Action's return value's types*/
+    TypeSet returnValues;
+
     // Specific to EVENT actions
     /** Whether the Event action can be cancelled */
     final boolean cancellable;
@@ -91,9 +85,77 @@ public class ActionType {
     /** Action's possible sub-action blocks */
     final List<BlockType> subActionBlocks;
 
-    private ActionType(String name, BlockType blockType, boolean cancellable, List<BlockType> subActionBlocks) {
+    /*
+     * Arguments parsing:
+     * {"text": ""} - TL_END - marks the end of a shared types between all
+     * {"text": "§xOR"} - TL_OR - all items from the start or last TL_OR are one option,
+     * and the ones after the TL_OR are a different option. Overloading.
+     * {param} - a param
+     */
+
+    private static ActionType fromJSON(JSONObject actionJSON) {
+        // Set ActionType's name
+        String name = DBCUtils.stripColors(actionJSON.getString("name"));
+
+        // Set ActionType's matching codeblock
+        String blockName = actionJSON.getString("codeblockName");
+        BlockType blockType = BlockType.getByName(blockName);
+
+        JSONObject iconObject = actionJSON.getJSONObject("icon");
+
+        // We are not sure whether the json even HAS the cancellable tag,
+        // so we check that first
+        boolean cancellable =
+                actionJSON.has("cancellable")
+                && iconObject.getBoolean("cancellable");
+
+        // We are also not sure that sub-action blocks exist for this action
+        List<BlockType> subActionBlocks;
+        if (actionJSON.has("subActionBlocks")) {
+            // Create the sub action blocks array list
+            subActionBlocks = new ArrayList<>();
+
+            for (Object oSBB : actionJSON.getJSONArray("subActionBlocks")) {
+                String sbbID = (String) oSBB;
+                BlockType curBT = BlockType.getByID(sbbID);
+                subActionBlocks.add(curBT);
+            }
+        } else
+            subActionBlocks = null;
+
+        // Create return value's possibe types
+        TypeSet types = actionReturnValuesFromJSON(actionJSON);
+
+
+        return new ActionType(name, blockType, types, cancellable, subActionBlocks);
+    }
+
+    private static TypeSet actionReturnValuesFromJSON(JSONObject actionObject) {
+        TypeSet types;
+        JSONObject iconObject = actionObject.getJSONObject("icon");
+        if (!iconObject.has("returnValues") || iconObject.getJSONArray("returnValues").isEmpty()) {
+            return null;
+        }
+
+        types = new TypeSet();
+        for (Object oRet : iconObject.getJSONArray("returnValues")) {
+            JSONObject ret = (JSONObject) oRet;
+            if (ret.has("type")) {
+                // Add a new type
+                String typeName = ret.getString("type");
+                DFItem.Type type = DFItem.Type.typeNames.get(typeName);
+                types.add(type);
+            }
+        }
+
+
+        return types;
+    }
+
+    private ActionType(String name, BlockType blockType, TypeSet returnValue, boolean cancellable, List<BlockType> subActionBlocks) {
         this.name = name;
         this.blockType = blockType;
+        this.returnValues = returnValue;
         this.cancellable = cancellable;
         this.subActionBlocks = subActionBlocks;
     }
@@ -112,6 +174,14 @@ public class ActionType {
      */
     public BlockType getBlockType() {
         return blockType;
+    }
+
+    /**
+     * Get the Action's return values' types
+     * @return the action's possible return values
+     */
+    public TypeSet getReturnValues() {
+        return returnValues;
     }
 
     /**

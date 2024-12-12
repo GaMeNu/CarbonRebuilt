@@ -1,7 +1,6 @@
 package me.gamenu.carbondf.code;
 
 import me.gamenu.carbondf.etc.ToJSONObject;
-import me.gamenu.carbondf.values.DFItem;
 import org.json.JSONObject;
 
 /**
@@ -13,7 +12,7 @@ public class CodeBlock implements ToJSONObject {
     private ActionType subAction;
     private TargetType selection;
 
-    private CodeBlockArgs<DFItem> args;
+    private CodeBlockArgs args;
     private Attribute attribute;
 
     public CodeBlock(BlockType block, ActionType action) {
@@ -21,10 +20,8 @@ public class CodeBlock implements ToJSONObject {
     }
 
     public CodeBlock(BlockType block, ActionType action, TargetType target) {
+        this.args = new CodeBlockArgs();
     }
-
-
-
 
 
     @Override

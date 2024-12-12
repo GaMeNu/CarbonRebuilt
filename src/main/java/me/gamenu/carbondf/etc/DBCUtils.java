@@ -2,6 +2,7 @@ package me.gamenu.carbondf.etc;
 
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -34,6 +35,21 @@ public class DBCUtils {
     public static final Set<String> soundTypes = new HashSet<>();
     /** This Map contains each valid Game Value's name, and its associated data (in JSON format) */
     public static final Map<String, JSONObject> gameValuesMap = new HashMap<>();
+    /**
+     * This Map contains all tags, by their associated block and action.<br/>
+     * format:<br/>
+     *
+     * <code><pre>
+     *     {
+     *         Block's ID: {
+     *             Action's name: {
+     *                 Tag's Name: Tag's JSON Object
+     *             }
+     *         }
+     *     }
+     * </pre></code>
+     */
+    public static final Map<String, Map<String, Map<String, JSONObject>>> tagsMap = new HashMap<>();
 
 
     /**
@@ -43,7 +59,7 @@ public class DBCUtils {
      */
     public static String stripColors(String text) {
         // Thanks DFOnline for the RegEx :thumbsup:
-        return text.replaceAll("(?i)[&§][\\dA-FK-ORX]", "");
+        return text.replaceAll("(?i)[&§][\\dA-FK-ORX]", "").strip();
     }
 
     static {
@@ -65,7 +81,7 @@ public class DBCUtils {
     private static void initParticleMap() {
         for (Object oPart : DBC.getJSONArray("particles")) {
             JSONObject part = (JSONObject) oPart;
-            particleMap.put(part.getString("particle"), part);
+            particleMap.put(stripColors(part.getString("particle")).strip(), part);
          }
     }
 
@@ -103,7 +119,7 @@ public class DBCUtils {
             // Prep codeBlock ID
             String cbID = codeBlockTypes.inverseBidiMap().get(at.getString("codeblockName"));
             // Prep action name)]
-            String actionName = at.getString("name");
+            String actionName = stripColors(at.getString("name"));
 
             // Create key if it does not exist
             if (!actionTypes.containsKey(cbID))
@@ -111,6 +127,27 @@ public class DBCUtils {
 
             // Place the action data
             actionTypes.get(cbID).put(actionName, at);
+        }
+    }
+
+    private static void initTags() {
+        for (Map.Entry<String, Map<String, JSONObject>> actBlockEntry : actionTypes.entrySet()) {
+            String blockName = actBlockEntry.getKey();
+            String blockID = codeBlockTypes.inverseBidiMap().get(blockName);
+            tagsMap.put(blockID, new HashMap<>());
+
+            for (Map.Entry<String, JSONObject> actEntry : actBlockEntry.getValue().entrySet()) {
+                String actionName = actEntry.getKey();
+
+                tagsMap.get(blockID).put(actionName, new HashMap<>());
+
+                JSONArray tagsArray = actEntry.getValue().getJSONArray("tags");
+                for (Object oTag : tagsArray) {
+                    JSONObject tag = (JSONObject) oTag;
+                    String tagName = tag.getString("name");
+                    tagsMap.get(blockID).get(actionName).put(tagName, tag);
+                }
+            }
         }
     }
 }

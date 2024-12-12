@@ -93,7 +93,8 @@ public abstract class DFItem implements ToJSONObject {
          * Block tags<br/>
          * Used for block tags
          */
-        BLOCK_TAG("bl_tag")
+        BLOCK_TAG("bl_tag"),
+        NONE("none")
         ;
 
         public static final HashMap<String, Type> typeNames = new HashMap<>();
@@ -112,6 +113,22 @@ public abstract class DFItem implements ToJSONObject {
             typeNames.put("LIST", LIST);
             typeNames.put("COMPONENT", STYLED_TEXT);
             typeNames.put("TEXT", STRING);
+            typeNames.put("POTION", POTION);
+            typeNames.put("SOUND", SOUND);
+            typeNames.put("PARTICLE", PARTICLE);
+            typeNames.put("VARIABLE", VARIABLE);
+            typeNames.put("ANY_TYPE", ANY);
+            // This is a fake type, which will be checked for later. Can accept no value.
+            typeNames.put("NONE", NONE);
+            // This is practically the same as an item
+            typeNames.put("BLOCK", ITEM);
+            // This is practically the same as a string
+            typeNames.put("BLOCK_TAG", STRING);
+            typeNames.put("PROJECTILE", ITEM);
+            typeNames.put("SPAWN_EGG", ITEM);
+            typeNames.put("VEHICLE", ITEM);
+            typeNames.put("DICT", DICT);
+            typeNames.put("ENTITY_TYPE", ITEM);
         }
 
         private static void initTypeIDs() {

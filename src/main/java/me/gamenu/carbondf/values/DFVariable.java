@@ -16,9 +16,14 @@ public class DFVariable extends DFItem {
     private final Scope scope;
 
     /**
-     * Type of the current variable's value
+     * Type(s) of the current variable
      */
-    private Type valueType;
+    private final TypeSet valueTypes;
+
+    /**
+     * Internal value of the variable
+     */
+    private DFItem internalValue;
 
     /**
      * Indicates whether this variable is a constant, strongly typed, or weakly typed.
@@ -27,45 +32,65 @@ public class DFVariable extends DFItem {
 
     /**
      * Create a new constant variable
-     * @param name name of the constant
+     *
+     * @param name  name of the constant
      * @param scope scope of the constant
-     * @param type type of the constant
      * @return the newly created variable
      */
-    public static DFVariable constant(String name, Scope scope, Type type) {
-        return new DFVariable(name, scope, type, VarKind.CONSTANT);
+    public static DFVariable constant(String name, Scope scope, DFItem value) {
+        if (value.getType() == Type.VARIABLE && value instanceof DFVariable) {
+            value = ((DFVariable) value).getValue();
+        }
+        return new DFVariable(name, scope, new TypeSet(value.getType()), VarKind.CONSTANT, value);
     }
 
     /**
      * Create a new type-checked (strongly typed) variable
-     * @param name name of the variable
+     *
+     * @param name  name of the variable
      * @param scope scope of the variable
-     * @param type type of the variable
+     * @param types type of the variable
      * @return the newly created variable
      */
-    public static DFVariable typed(String name, Scope scope, Type type) {
-        return new DFVariable(name, scope, type, VarKind.TYPED);
+    public static DFVariable typed(String name, Scope scope, TypeSet types) {
+        return new DFVariable(name, scope, types, VarKind.TYPED, null);
     }
 
     /**
      * Instantiate a new dynamic variable
-     * @param name name of the variable
+     *
+     * @param name  name of the variable
      * @param scope scope of the variable
      */
     public static DFVariable dynamic(String name, Scope scope) {
-        return dynamic(name, scope, null);
+        return new DFVariable(name, scope, new TypeSet(), VarKind.DYNAMIC, null);
     }
 
-    public static DFVariable dynamic(String name, Scope scope, Type type) {
-        return new DFVariable(name, scope, type, VarKind.DYNAMIC);
-    }
-
-    public DFVariable(String name, Scope scope, Type type, VarKind kind) {
+    /**
+     * The default constructor for DFVariable.<br/>
+     * In general, it is recommended to instead use the following methods:<br/><br/>
+     * Dynamic variables: {@link DFVariable#dynamic(String name, Scope scope)}<br/>
+     * Typed variables: {@link DFVariable#typed(String name, Scope scope, TypeSet types)}<br/>
+     * Constants: {@link DFVariable#constant(String name, Scope scope, DFItem value)}<br/>
+     *
+     * @param name          Name of the variable
+     * @param scope         Scope of the variable
+     * @param types         Valid variable types (for typed values)
+     * @param kind          Variable kind
+     * @param internalValue initial, internal value of the variable
+     */
+    private DFVariable(String name, Scope scope, TypeSet types, VarKind kind, DFItem internalValue) {
         super(Type.VARIABLE);
         this.name = name;
         this.scope = scope;
-        this.valueType = type;
         this.varKind = kind;
+
+        if (types == null || types.isEmpty())
+            this.valueTypes = new TypeSet(Type.ANY);
+        else
+            this.valueTypes = types;
+
+        this.internalValue = internalValue;
     }
 
     public String getName() {
@@ -77,26 +102,76 @@ public class DFVariable extends DFItem {
     }
 
     /**
-     * Set the variable's internal value. This is NOT the same as the SetVariable DiamondFire Code Block, and will not create a corresponding CodeBlock either.
-     * @param newValue internal value to set
+     * <p>Set the variable's internal value.</p>
+     * <p>This is NOT the same as the SetVariable DiamondFire Code Block,
+     * and will not create a corresponding CodeBlock either.</p>
+     *
+     * @param valueToSet internal value to set
      * @return this
      */
-    public DFVariable setValue(DFItem newValue) {
+    public DFVariable setValue(DFItem valueToSet) {
         if (varKind == VarKind.CONSTANT)
             throw new TypeException("Cannot set a value on a constant variable");
 
-        if (varKind == VarKind.TYPED && valueType != Type.ANY) {
-            if (valueType != newValue.getType())
-                throw new TypeException("Cannot assign value of type " + newValue.getType() + " to a variable of type " + valueType);
+        TypeSet newTypes;
+        if (valueToSet.getType() == Type.VARIABLE
+                && valueToSet instanceof DFVariable varToSet) {
+            // Set the new value to the variable's internal value
+            valueToSet = varToSet.getValue();
+
+            // If the variable's value is null, we'll use its static TypeSet.
+            // If it does have a set value, we'll use its set value instead.
+            // Variable's may be declared but not have a value during compile, for example, with parameters
+            newTypes = (valueToSet == null) ?
+                    varToSet.getValueTypes() :
+                    new TypeSet(varToSet.getRealValueType());
+
+        } else {
+            // Set the currently set type to the currently set (runtime) type
+            newTypes = new TypeSet(valueToSet.getType());
         }
 
+        if (varKind == VarKind.TYPED && !valueTypes.contains(Type.ANY)) {
+            TypeSet common = new TypeSet(valueTypes);
+
+            common.retainAll(newTypes);
+            if (common.isEmpty()) {
+                throw new TypeException("Cannot assign value of type(s) " + newTypes + " to a variable \"" + name + "\" of type(s) " + valueTypes);
+            }
+        }
+
+
         if (varKind != VarKind.TYPED)
-            this.valueType = newValue.getType();
+            // This is probably a bad idea
+            // TODO: Remove adding things to the TypeUnion at all
+            this.valueTypes.addAll(newTypes);
+
+        this.internalValue = valueToSet;
+
         return this;
     }
 
-    public Type getValueType() {
-        return valueType;
+    /**
+     * Get the variable's possible types
+     *
+     * @return the variable's possible types
+     */
+    public TypeSet getValueTypes() {
+        return valueTypes;
+    }
+
+    public DFItem getValue() {
+        return internalValue;
+    }
+
+    /**
+     * Returns the variable's current value
+     *
+     * @return variable's current value OR {@link Type#NONE} if there is no internalValue
+     */
+    public Type getRealValueType() {
+        if (internalValue == null) return Type.NONE;
+        return internalValue.getType();
     }
 
     @Override
@@ -113,8 +188,7 @@ public class DFVariable extends DFItem {
         GLOBAL("unsaved"),
         SAVED("saved"),
         LOCAL("local"),
-        LINE("line")
-        ;
+        LINE("line");
 
         private final String id;
 

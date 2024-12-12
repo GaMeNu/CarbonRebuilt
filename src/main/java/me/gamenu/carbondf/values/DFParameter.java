@@ -4,9 +4,11 @@ import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import me.gamenu.carbondf.exceptions.TypeException;
 import org.json.JSONObject;
 
-import java.util.Arrays;
-
-
+/**
+ * This class represents a DiamondFire Parameter item.
+ * Due to the complexity of this class, creating a new instance of DFParameter will be done using the
+ * {@link DFParameter.Builder} class instead of {@link DFParameter#DFParameter}
+ */
 public class DFParameter extends DFItem {
     
 
@@ -15,9 +17,10 @@ public class DFParameter extends DFItem {
      */
     public static class Builder {
 
-        private static final Type[] INVALID_DEFAULT_VALUE_TYPES = {Type.LIST, Type.DICT, Type.VARIABLE};
-        private static final Type[] VALID_PARAM_TYPES = {
+        private static final TypeSet INVALID_DEFAULT_VALUE_TYPES = new TypeSet(Type.LIST, Type.DICT, Type.VARIABLE);
+        private static final TypeSet VALID_PARAM_TYPES = new TypeSet(
                 Type.ANY,
+                Type.VARIABLE,
                 Type.ITEM,
                 Type.STRING,
                 Type.STYLED_TEXT,
@@ -28,14 +31,15 @@ public class DFParameter extends DFItem {
                 Type.PARTICLE,
                 Type.POTION,
                 Type.LIST,
-                Type.DICT
-        };
+                Type.DICT,
+                Type.NONE
+        );
 
         /** The name of the parameter */
         String name;
 
         /** The type of the parameter */
-        Type paramType;
+        TypeSet paramTypes;
 
         /** The description of the parameter */
         String description;
@@ -65,35 +69,46 @@ public class DFParameter extends DFItem {
         DFItem defaultValue;
 
         /**
+         * Creates a new (unchecked) Parameter Builder
+         * @param name The name of the parameters
+         */
+        public Builder(String name) {
+            this(name, null);
+        }
+
+        /**
          * Creates a new Parameter Builder
          *
          * @param name The name of the parameter
-         * @param type The type of the parameter (leave for a non type-checked parameter)
+         * @param types The types of the parameter (set null for a non type-checked parameter)
          */
-        public Builder(String name, Type type) {
+        public Builder(String name, TypeSet types) {
             // Make sure we have a valid name
             if (name == null || name.isBlank()) throw new InvalidFieldException("Name cannot be empty!");
 
 
             // Make sure we have a valid type
-            Type paramType = type == null ? Type.ANY : type;
+            TypeSet paramTypes = types == null ? new TypeSet(Type.ANY) : types;
 
             // Make sure to prevent the user from initializing a VARIABLE-type param.
             // We want to use the returnValue system instead to enforce strong typing when necessary.
-            if (paramType == Type.VARIABLE)
-                throw new InvalidFieldException("Cannot set the type to VARIABLE! Please use Parameter.Builder.setReturnParam() instead.");
+            /* if (paramTypes.contains(Type.VARIABLE))
+             *    throw new InvalidFieldException("Cannot set the type to VARIABLE! Please use Parameter.Builder.setReturnParam() instead.");
+             */
 
+            paramTypes.forEach(type -> {
+                if (!VALID_PARAM_TYPES.contains(type))
+                    throw new InvalidFieldException("Cannot set the parameter type to " + type);
+            });
 
-            if (Arrays.stream(VALID_PARAM_TYPES).noneMatch(value -> value.equals(paramType)))
-                throw new InvalidFieldException("Cannot set the parameter type to " + type);
 
             this.name = name;
-            this.paramType = type;
+            this.paramTypes = types;
             this.plural = false;
             this.optional = false;
             this.returned = false;
             // Set whether this parameter and the subsequent variable should be type-checked
-            this.typeChecked = !(type == null);
+            this.typeChecked = !(types == null);
             this.defaultValue = null;
         }
 
@@ -190,15 +205,15 @@ public class DFParameter extends DFItem {
                     throw new InvalidFieldException("Returned parameters cannot have a default value");
 
                 // Check if the param's type is qualified for a default value at all
-                if (Arrays.stream(INVALID_DEFAULT_VALUE_TYPES).anyMatch(value -> value.equals(this.paramType)))
-                    throw new InvalidFieldException("Default values cannot be added to type " + this.paramType);
+                if (INVALID_DEFAULT_VALUE_TYPES.stream().anyMatch(this.paramTypes::contains))
+                    throw new InvalidFieldException("Default values cannot be added to type " + this.paramTypes);
 
                 // Check if the param is optional AND not plural
                 if (!this.optional || this.plural)
                     throw new InvalidFieldException("Default values can only be added to optional, non-plural parameters");
 
-                if (!paramType.canAcceptType(defaultValue.getType()))
-                    throw new TypeException("Parameter type " + paramType + " cannot accept default value of type " + defaultValue.getType());
+                if (!paramTypes.canAcceptType(defaultValue.getType()))
+                    throw new TypeException("Parameter type " + paramTypes + " cannot accept default value of type " + defaultValue.getType());
             }
 
             // Check whether this is a valid return param.
@@ -212,7 +227,7 @@ public class DFParameter extends DFItem {
             return new DFParameter(
                     name,
                     description,
-                    paramType,
+                    paramTypes,
                     plural,
                     optional,
                     returned,
@@ -226,7 +241,7 @@ public class DFParameter extends DFItem {
 
     String name;
     String description;
-    Type paramType;
+    TypeSet paramTypes;
 
     boolean plural;
     boolean optional;
@@ -235,9 +250,29 @@ public class DFParameter extends DFItem {
 
     DFItem defaultValue;
 
+    /**
+     * This saves the instance of the variable matching the parameter,
+     * so that {@link DFParameter#buildVariable()} always returns the same instance
+     */
+    DFVariable builtVariable;
+
+    /**
+     * This is an internal constructor for the DFParameter class.
+     * Please do not use this constructor outside of {@link DFParameter.Builder}, to prevent illegal DFParameter states.
+     * @param name Name of the DFParameter
+     * @param description Description for the DFParameter
+     * @param types Types of the DFParameter
+     * @param plural Whether the DFParameter can contain more than one value
+     * @param optional Whether the DFParameter can contain no value at all
+     * @param returned Whether the DFParameter is "returned" - takes in a Variable and sets its value inside the function.<br/>
+     *                 Used only in CarbonDF
+     * @param typeChecked Whether the DFParameter (and its subsequent DFVariable value) is strongly typed.<br/>
+     *                    Used only in CarbonDF
+     * @param defaultValue The default value of the DFParameter, in case it is optional and did not receive a value.
+     */
     protected DFParameter(String name,
                           String description,
-                          Type type,
+                          TypeSet types,
                           boolean plural,
                           boolean optional,
                           boolean returned,
@@ -247,7 +282,7 @@ public class DFParameter extends DFItem {
         super(Type.PARAMETER);
         this.name = name;
         this.description = description;
-        this.paramType = type;
+        this.paramTypes = types;
         this.plural = plural;
         this.optional = optional;
         this.returned = returned;
@@ -256,21 +291,28 @@ public class DFParameter extends DFItem {
     }
 
     /**
-     * This method returns the parameter's matching variable.
+     * On first call, this method builds a new {@link DFVariable}, matching the parameter, and store it.<br/>
+     * On second call onwards, the method will return the same instance of the variable.
      *
      * @return the matching variable for this parameter
      */
     public DFVariable buildVariable() {
-        if (typeChecked) return DFVariable.typed(name, DFVariable.Scope.LINE, paramType);
-        else return DFVariable.dynamic(name, DFVariable.Scope.LINE, paramType);
+        if (builtVariable != null) return builtVariable;
+
+        TypeSet varTypes = paramTypes;
+        builtVariable = typeChecked ?
+                DFVariable.typed(name, DFVariable.Scope.LINE, varTypes) :
+                DFVariable.dynamic(name, DFVariable.Scope.LINE);
+
+        return builtVariable;
     }
 
     /**
      * Get the parameter's type
      * @return the parameter's current type
      */
-    public Type getParamType() {
-        return paramType;
+    public TypeSet getParamTypes() {
+        return paramTypes;
     }
 
     /**
@@ -282,9 +324,9 @@ public class DFParameter extends DFItem {
      * </p>
      * @return the parameter's current real type
      */
-    public Type getRealType() {
-        if (returned) return Type.VARIABLE;
-        return paramType;
+    public TypeSet getRealType() {
+        if (returned) return new TypeSet(Type.VARIABLE);
+        return paramTypes;
     }
 
     /**
@@ -297,11 +339,14 @@ public class DFParameter extends DFItem {
         if (this.returned) return other.getType() == Type.VARIABLE;
 
         // Check if the other item is simply acceptable
-        if (this.getParamType().canAcceptType(other.getType())) return true;
+        if (this.getParamTypes().canAcceptType(other.getType())) return true;
 
         // Check if the other's type is a game value with an acceptable RETURN type
         if (other.getType() == Type.GAME_VALUE && other instanceof DFGameValue) {
-            return this.getParamType().canAcceptType(((DFGameValue) other).getReturnType());
+            return this.getParamTypes().canAcceptType(((DFGameValue) other).getReturnType());
+        }
+        if (other.getType() == Type.VARIABLE && other instanceof DFVariable) {
+            return this.getParamTypes().canAcceptType(((DFVariable) other).getValueTypes());
         }
 
         return false;
@@ -312,9 +357,12 @@ public class DFParameter extends DFItem {
         JSONObject data = new JSONObject()
                 .put("name", name)
                 .put("description", description)
-                .put("type", getRealType().getId())
                 .put("plural", plural)
                 .put("optional", optional);
+        if (getRealType().size() == 1)
+            data.put("type", getRealType().iterator().next().getId());
+        else
+            data.put("type", Type.ANY.getId());
 
         if (defaultValue != null)
             data.put("default_value", defaultValue.toJSON());

@@ -1,12 +1,17 @@
 package me.gamenu.carbondf.code;
 
+import me.gamenu.carbondf.etc.ToJSONObject;
+import me.gamenu.carbondf.values.DFItem;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
 
-public class CodeBlockArgs<DFItem> implements List<DFItem> {
+public class CodeBlockArgs implements List<DFItem>, ToJSONObject {
     public final int MAX_ARGS_SIZE = 27;
 
     List<DFItem> args;
@@ -53,6 +58,7 @@ public class CodeBlockArgs<DFItem> implements List<DFItem> {
 
     @Override
     public boolean containsAll(Collection<?> c) {
+        //noinspection SlowListContainsAll
         return args.containsAll(c);
     }
 
@@ -124,5 +130,22 @@ public class CodeBlockArgs<DFItem> implements List<DFItem> {
     @Override
     public List<DFItem> subList(int fromIndex, int toIndex) {
         return args.subList(fromIndex, toIndex);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONArray items = new JSONArray();
+        // Check for each of the
+        for (int i = 0; i < size(); i++) {
+            DFItem arg = get(i);
+            if (arg != null) {
+                JSONObject item = new JSONObject()
+                        .put("item", arg.toJSON())
+                        .put("slot", i);
+                items.put(item);
+            }
+        }
+        return new JSONObject()
+                .put("items", items);
     }
 }

@@ -18,7 +18,7 @@ public class BlockType {
      * @param id BlockType's ID
      * @return matching BlockType
      */
-    public static BlockType fromID(String id) {
+    public static BlockType getByID(String id) {
         return blockTypes.get(id);
     }
 
@@ -27,7 +27,7 @@ public class BlockType {
      * @param name BlockType's name
      * @return matching BlockType
      */
-    public static BlockType fromName(String name) {
+    public static BlockType getByName(String name) {
         String id = DBCUtils.codeBlockTypes.inverseBidiMap().get(name);
         return blockTypes.get(id);
     }

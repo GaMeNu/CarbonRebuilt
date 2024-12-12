@@ -5,8 +5,8 @@ import me.gamenu.carbondf.code.ActionType;
 public class Main {
     public static void main(String[] args) {
 
-        System.out.println(
-                ActionType.fromName("set_var", "=").getBlockType().getName()
-        );
+        ActionType at = ActionType.getByName("set_var", "GetSignText");
+        System.out.println(at.getBlockType().getName() + "::" + at.getName());
+        System.out.println(at.getReturnValues());
     }
 }
