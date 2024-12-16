@@ -38,7 +38,7 @@ public class DFVariable extends DFItem {
      * @return the newly created variable
      */
     public static DFVariable constant(String name, Scope scope, DFItem value) {
-        if (value.getType() == Type.VARIABLE && value instanceof DFVariable) {
+        if (value.getRealType() == Type.VARIABLE && value instanceof DFVariable) {
             value = ((DFVariable) value).getValue();
         }
         return new DFVariable(name, scope, new TypeSet(value.getType()), VarKind.CONSTANT, value);
@@ -114,7 +114,7 @@ public class DFVariable extends DFItem {
             throw new TypeException("Cannot set a value on a constant variable");
 
         TypeSet newTypes;
-        if (valueToSet.getType() == Type.VARIABLE
+        if (valueToSet.getRealType() == Type.VARIABLE
                 && valueToSet instanceof DFVariable varToSet) {
             // Set the new value to the variable's internal value
             valueToSet = varToSet.getValue();
@@ -123,7 +123,7 @@ public class DFVariable extends DFItem {
             // If it does have a set value, we'll use its set value instead.
             // Variable's may be declared but not have a value during compile, for example, with parameters
             newTypes = (valueToSet == null) ?
-                    varToSet.getValueTypes() :
+                    varToSet.getValue().getType() :
                     new TypeSet(varToSet.getRealValueType());
 
         } else {
@@ -156,7 +156,11 @@ public class DFVariable extends DFItem {
      *
      * @return the variable's possible types
      */
-    public TypeSet getValueTypes() {
+    @Override
+    public TypeSet getType() {
+        if (internalValue != null) {
+            return internalValue.getType();
+        }
         return valueTypes;
     }
 
@@ -164,13 +168,19 @@ public class DFVariable extends DFItem {
         return internalValue;
     }
 
+    public VarKind getVarKind() {
+        return varKind;
+    }
+
     /**
-     * Returns the variable's current value
+     * Returns the variable's real value type.
+     * This has no effect if the value is a primitive, but if the value is, for example, a game value, this will return
+     * {@link Type#GAME_VALUE}
      *
-     * @return variable's current value OR {@link Type#NONE} if there is no internalValue
+     * @return variable's current value type OR {@link Type#NONE} if there is no internalValue
      */
-    public Type getRealValueType() {
-        if (internalValue == null) return Type.NONE;
+    public TypeSet getRealValueType() {
+        if (internalValue == null) return new TypeSet(Type.NONE);
         return internalValue.getType();
     }
 

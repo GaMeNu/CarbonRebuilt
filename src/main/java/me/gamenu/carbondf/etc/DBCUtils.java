@@ -69,37 +69,38 @@ public class DBCUtils {
             throw new RuntimeException(e);
         }
 
-        initParticleMap();
-        initPotionsSet();
-        initSoundsSet();
-        initGameValuesMap();
+        initParticles();
+        initPotions();
+        initSounds();
+        initGameValues();
 
         initCodeBlockTypes();
         initActionTypes();
+        initTags();
     }
 
-    private static void initParticleMap() {
+    private static void initParticles() {
         for (Object oPart : DBC.getJSONArray("particles")) {
             JSONObject part = (JSONObject) oPart;
             particleMap.put(stripColors(part.getString("particle")).strip(), part);
          }
     }
 
-    private static void initPotionsSet() {
+    private static void initPotions() {
         for (Object oPot : DBC.getJSONArray("potions")) {
             JSONObject pot = (JSONObject) oPot;
             potionTypes.add(pot.getString("potion"));
         }
     }
 
-    private static void initSoundsSet() {
+    private static void initSounds() {
         for (Object oSnd : DBC.getJSONArray("sounds")) {
             JSONObject snd = (JSONObject) oSnd;
             soundTypes.add(snd.getString("sound"));
         }
     }
 
-    private static void initGameValuesMap() {
+    private static void initGameValues() {
         for (Object oGV : DBC.getJSONArray("gameValues")) {
             JSONObject gv = (JSONObject) oGV;
             gameValuesMap.put(stripColors(gv.getJSONObject("icon").getString("name")), gv);
@@ -132,8 +133,7 @@ public class DBCUtils {
 
     private static void initTags() {
         for (Map.Entry<String, Map<String, JSONObject>> actBlockEntry : actionTypes.entrySet()) {
-            String blockName = actBlockEntry.getKey();
-            String blockID = codeBlockTypes.inverseBidiMap().get(blockName);
+            String blockID = actBlockEntry.getKey();
             tagsMap.put(blockID, new HashMap<>());
 
             for (Map.Entry<String, JSONObject> actEntry : actBlockEntry.getValue().entrySet()) {

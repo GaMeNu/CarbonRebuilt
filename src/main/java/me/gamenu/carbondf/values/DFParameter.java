@@ -324,9 +324,10 @@ public class DFParameter extends DFItem {
      * </p>
      * @return the parameter's current real type
      */
-    public TypeSet getRealType() {
-        if (returned) return new TypeSet(Type.VARIABLE);
-        return paramTypes;
+    public Type getParamRealType() {
+        if (returned) return Type.VARIABLE;
+        if (paramTypes.size() == 1) return paramTypes.stream().toList().getFirst();
+        return Type.ANY;
     }
 
     /**
@@ -336,20 +337,10 @@ public class DFParameter extends DFItem {
      */
     public boolean canAcceptItem(DFItem other) {
         // Return parameters may only accept variables
-        if (this.returned) return other.getType() == Type.VARIABLE;
+        if (this.returned) return other.getRealType() == Type.VARIABLE;
 
         // Check if the other item is simply acceptable
-        if (this.getParamTypes().canAcceptType(other.getType())) return true;
-
-        // Check if the other's type is a game value with an acceptable RETURN type
-        if (other.getType() == Type.GAME_VALUE && other instanceof DFGameValue) {
-            return this.getParamTypes().canAcceptType(((DFGameValue) other).getReturnType());
-        }
-        if (other.getType() == Type.VARIABLE && other instanceof DFVariable) {
-            return this.getParamTypes().canAcceptType(((DFVariable) other).getValueTypes());
-        }
-
-        return false;
+        return this.getParamTypes().canAcceptType(other.getType());
     }
 
     @Override
@@ -358,11 +349,8 @@ public class DFParameter extends DFItem {
                 .put("name", name)
                 .put("description", description)
                 .put("plural", plural)
-                .put("optional", optional);
-        if (getRealType().size() == 1)
-            data.put("type", getRealType().iterator().next().getId());
-        else
-            data.put("type", Type.ANY.getId());
+                .put("optional", optional)
+                .put("type", getParamRealType().getId());
 
         if (defaultValue != null)
             data.put("default_value", defaultValue.toJSON());

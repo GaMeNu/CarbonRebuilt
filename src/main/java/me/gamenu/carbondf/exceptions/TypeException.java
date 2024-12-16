@@ -1,5 +1,8 @@
 package me.gamenu.carbondf.exceptions;
 
+/**
+ * This class represents a Type checking error
+ */
 public class TypeException extends CarbonRuntimeException {
     public TypeException() {
     }

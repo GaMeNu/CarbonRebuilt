@@ -1,9 +1,9 @@
-package me.gamenu.carbondf.code;
+package me.gamenu.carbondf.types;
 
+import me.gamenu.carbondf.code.Target;
 import me.gamenu.carbondf.etc.DBCUtils;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents a CodeBlock type.
@@ -18,7 +18,7 @@ public class BlockType {
      * @param id BlockType's ID
      * @return matching BlockType
      */
-    public static BlockType getByID(String id) {
+    public static BlockType byID(String id) {
         return blockTypes.get(id);
     }
 
@@ -27,7 +27,7 @@ public class BlockType {
      * @param name BlockType's name
      * @return matching BlockType
      */
-    public static BlockType getByName(String name) {
+    public static BlockType byName(String name) {
         String id = DBCUtils.codeBlockTypes.inverseBidiMap().get(name);
         return blockTypes.get(id);
     }
@@ -37,14 +37,19 @@ public class BlockType {
     /** BLockType's name */
     private final String name;
 
+    private final Set<Target> validTargets;
+
     /**
      * Create a new BlockType
-     * @param id Block's ID
-     * @param name Block's name
+     *
+     * @param id           Block's ID
+     * @param name         Block's name
+     * @param validTargets Valid BlockType targets (may be null)
      */
-    private BlockType(String id, String name) {
+    private BlockType(String id, String name, Set<Target> validTargets) {
         this.id = id;
         this.name = name;
+        this.validTargets = validTargets;
     }
 
     /**
@@ -63,11 +68,21 @@ public class BlockType {
         return name;
     }
 
+
     static {
+        Set<Target> validTargets = Set.of(Target.values());
+        Map<String, Set<Target>> blockSelectionsMap = new HashMap<>();
+        blockSelectionsMap.put("player_action", validTargets);
+        blockSelectionsMap.put("entity_event",  validTargets);
+        blockSelectionsMap.put("entity_action", validTargets);
+        blockSelectionsMap.put("if_entity",     validTargets);
+        blockSelectionsMap.put("if_player",     validTargets);
+
 
         for (Map.Entry<String, String> block: DBCUtils.codeBlockTypes.entrySet()){
-
-            blockTypes.put(block.getKey(), new BlockType(block.getKey(), block.getValue()));
+            blockTypes.put(block.getKey(),
+                    new BlockType(block.getKey(), block.getValue(), blockSelectionsMap.get(block.getKey()))
+            );
         }
 
     }

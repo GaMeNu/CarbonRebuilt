@@ -1,6 +1,6 @@
 package me.gamenu.carbondf.code;
 
-public enum TargetType {
+public enum Target {
     SELECTION("Selection"),
     DEFAULT("Default"),
     KILLER("Killer"),
@@ -12,7 +12,11 @@ public enum TargetType {
     ;
     private final String id;
 
-    TargetType(String id){
+    Target(String id){
         this.id = id;
+    }
+
+    public String getId() {
+        return id;
     }
 }

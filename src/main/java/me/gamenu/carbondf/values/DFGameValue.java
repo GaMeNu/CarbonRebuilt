@@ -1,5 +1,6 @@
 package me.gamenu.carbondf.values;
 
+import me.gamenu.carbondf.code.Target;
 import me.gamenu.carbondf.etc.DBCUtils;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import org.json.JSONObject;
@@ -46,6 +47,11 @@ public class DFGameValue extends DFItem{
         returnType = Type.typeNames.get(returnTypeName);
     }
 
+    @Override
+    public TypeSet getType() {
+        return new TypeSet(returnType);
+    }
+
     /**
      * Get the current Game Value type
      * @return the current Game Value type
@@ -79,28 +85,4 @@ public class DFGameValue extends DFItem{
         return createJSONFromData(data);
     }
 
-    /**
-     * Possible Game Value targets
-     */
-    public enum Target {
-        // I generated this with a Python script based on DFOnline's source code :+1:
-        SELECTION("Selection"),
-        DEFAULT("Default"),
-        VICTIM("Victim"),
-        KILLER("Killer"),
-        DAMAGER("Damager"),
-        SHOOTER("Shooter"),
-        PROJECTILE("Projectile"),
-        LAST_ENTITY("LastEntity");
-
-        final String id;
-
-        Target(String targetId) {
-            this.id = targetId;
-        }
-
-        public String getId() {
-            return id;
-        }
-    }
 }

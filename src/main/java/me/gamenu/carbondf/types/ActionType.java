@@ -1,4 +1,4 @@
-package me.gamenu.carbondf.code;
+package me.gamenu.carbondf.types;
 
 import me.gamenu.carbondf.etc.DBCUtils;
 import me.gamenu.carbondf.values.DFItem;
@@ -23,7 +23,7 @@ public class ActionType {
      * @param name ActionType's name
      * @return the requested ActionType (null if not found)
      */
-    public static ActionType getByName(BlockType blockType, String name) {
+    public static ActionType byName(BlockType blockType, String name) {
         Map<String, ActionType> cbActs = actionTypes.get(blockType);
         if (cbActs == null) return null;
         return cbActs.get(name);
@@ -35,15 +35,15 @@ public class ActionType {
      * @param name ActionType's name
      * @return the requested ActionType (null if not found)
      */
-    public static ActionType getByName(String blockID, String name) {
-        return getByName(BlockType.getByID(blockID), name);
+    public static ActionType byName(String blockID, String name) {
+        return byName(BlockType.byID(blockID), name);
     }
 
     static {
         actionTypes = new HashMap<>();
         for (Map.Entry<String, Map<String, JSONObject>> blockActsEntry : DBCUtils.actionTypes.entrySet()) {
             // Current block type (original map is already sorted)
-            BlockType blockType = BlockType.getByID(blockActsEntry.getKey());
+            BlockType blockType = BlockType.byID(blockActsEntry.getKey());
 
             actionTypes.put(blockType, new HashMap<>());
             for (Map.Entry<String, JSONObject> actEntry : blockActsEntry.getValue().entrySet()) {
@@ -85,6 +85,9 @@ public class ActionType {
     /** Action's possible sub-action blocks */
     final List<BlockType> subActionBlocks;
 
+    /** A list of possible tag names for this action type */
+    final List<String> tagNames;
+
     /*
      * Arguments parsing:
      * {"text": ""} - TL_END - marks the end of a shared types between all
@@ -99,7 +102,7 @@ public class ActionType {
 
         // Set ActionType's matching codeblock
         String blockName = actionJSON.getString("codeblockName");
-        BlockType blockType = BlockType.getByName(blockName);
+        BlockType blockType = BlockType.byName(blockName);
 
         JSONObject iconObject = actionJSON.getJSONObject("icon");
 
@@ -117,7 +120,7 @@ public class ActionType {
 
             for (Object oSBB : actionJSON.getJSONArray("subActionBlocks")) {
                 String sbbID = (String) oSBB;
-                BlockType curBT = BlockType.getByID(sbbID);
+                BlockType curBT = BlockType.byID(sbbID);
                 subActionBlocks.add(curBT);
             }
         } else
@@ -126,8 +129,16 @@ public class ActionType {
         // Create return value's possibe types
         TypeSet types = actionReturnValuesFromJSON(actionJSON);
 
+        // Create a list of possible tags
+        List<String> tagNames = new ArrayList<>();
+        if (actionJSON.has("tags")) {
+            for (Object oTag : actionJSON.getJSONArray("tags")) {
+                JSONObject tagObj = (JSONObject) oTag;
+                tagNames.add(tagObj.getString("name"));
+            }
+        }
 
-        return new ActionType(name, blockType, types, cancellable, subActionBlocks);
+        return new ActionType(name, blockType, types, cancellable, subActionBlocks, tagNames);
     }
 
     private static TypeSet actionReturnValuesFromJSON(JSONObject actionObject) {
@@ -148,16 +159,16 @@ public class ActionType {
             }
         }
 
-
         return types;
     }
 
-    private ActionType(String name, BlockType blockType, TypeSet returnValue, boolean cancellable, List<BlockType> subActionBlocks) {
+    private ActionType(String name, BlockType blockType, TypeSet returnValue, boolean cancellable, List<BlockType> subActionBlocks, List<String> tagNames) {
         this.name = name;
         this.blockType = blockType;
         this.returnValues = returnValue;
         this.cancellable = cancellable;
         this.subActionBlocks = subActionBlocks;
+        this.tagNames = tagNames;
     }
 
     /**
@@ -199,5 +210,9 @@ public class ActionType {
      */
     public List<BlockType> getSubActionBlocks() {
         return subActionBlocks;
+    }
+
+    public List<String> getTagNames() {
+        return tagNames;
     }
 }

@@ -29,10 +29,20 @@ public abstract class DFItem implements ToJSONObject {
     }
 
     /**
-     * Get the current item's {@link Type Type}
-     * @return the current item's type
+     * Get the current item's {@link Type Type}<br/>
+     * This method may be overridden for a value to "pretend" to be of another type (e.g. variables, game values)
+     * @return the item's type
      */
-    public Type getType() {
+    public TypeSet getType() {
+        return new TypeSet(type);
+    }
+
+    /**
+     * Get the item's real type.<br/>
+     * This method may not be overridden.
+     * @return the item's real type
+     */
+    public final Type getRealType() {
         return type;
     }
 
