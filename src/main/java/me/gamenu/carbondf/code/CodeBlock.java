@@ -11,7 +11,6 @@ import org.json.JSONObject;
  * This class represents a single CodeBlock
  */
 public class CodeBlock extends Block implements ToJSONObject {
-    // TODO: split to two subclasses - normal codeblocks, and dynamic codeblocks (funcs, procs, callfuncs, callprocs)
     private ActionType action;
     private ActionType subAction;
     private Target target;
