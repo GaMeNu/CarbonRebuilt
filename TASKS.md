@@ -9,7 +9,8 @@
 | Code actions                      | Mostly Done<br/>(dynamics)                         |
 | Block Tags                        | DONE                                               |
 | Return system                     | Support for PARAMETERS only                        |
+| SubAction blocks                  | DONE                                               |                                                    |
 | Global token center (vars, funcs) |                                                    |    
 | Apply Type System to funcCalls    |                                                    |
-| Templates                         |                                                    |
+| Templates                         | DONE (hopefully?)                                  |
 

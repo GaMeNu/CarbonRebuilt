@@ -19,6 +19,7 @@ public class DFNumber extends DFItem {
 
     @Override
     public JSONObject toJSON() {
-        return createJSONFromData(new JSONObject().put("name", Double.toString(value)));
+        int rndVal = (int) value;
+        return createJSONFromData(new JSONObject().put("name", (rndVal == value) ? Integer.toString(rndVal) : Double.toString(value)));
     }
 }

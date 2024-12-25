@@ -2,6 +2,7 @@ package me.gamenu.carbondf.types;
 
 import me.gamenu.carbondf.code.Target;
 import me.gamenu.carbondf.etc.DBCUtils;
+import me.gamenu.carbondf.exceptions.InvalidFieldException;
 
 import java.util.*;
 
@@ -19,7 +20,11 @@ public class BlockType {
      * @return matching BlockType
      */
     public static BlockType byID(String id) {
-        return blockTypes.get(id);
+        BlockType res = blockTypes.get(id);
+        if (res == null) {
+            throw new InvalidFieldException("Cannot get BlockType of ID \"" + id + "\"");
+        }
+        return res;
     }
 
     /**
@@ -29,6 +34,9 @@ public class BlockType {
      */
     public static BlockType byName(String name) {
         String id = DBCUtils.codeBlockTypes.inverseBidiMap().get(name);
+        if (id == null) {
+            throw new InvalidFieldException("Cannot get BlockType of name \"" + name + "\"");
+        }
         return blockTypes.get(id);
     }
 
@@ -68,6 +76,9 @@ public class BlockType {
         return name;
     }
 
+    public boolean equals(BlockType obj) {
+        return getId().equals(obj.getId());
+    }
 
     static {
         Set<Target> validTargets = Set.of(Target.values());

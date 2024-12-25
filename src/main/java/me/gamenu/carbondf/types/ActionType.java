@@ -1,6 +1,7 @@
 package me.gamenu.carbondf.types;
 
 import me.gamenu.carbondf.etc.DBCUtils;
+import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import me.gamenu.carbondf.values.DFItem;
 import me.gamenu.carbondf.values.TypeSet;
 import org.json.JSONObject;
@@ -25,8 +26,12 @@ public class ActionType {
      */
     public static ActionType byName(BlockType blockType, String name) {
         Map<String, ActionType> cbActs = actionTypes.get(blockType);
-        if (cbActs == null) return null;
-        return cbActs.get(name);
+        if (cbActs == null)
+            throw new InvalidFieldException("Cannot get ActionType of name \"" + name + "\"");
+        ActionType res =  cbActs.get(name);
+        if (res == null)
+            throw new InvalidFieldException("Cannot get ActionType of name \"" + name + "\"");
+        return res;
     }
 
     /**
@@ -50,12 +55,7 @@ public class ActionType {
                 JSONObject actionJSON = actEntry.getValue();
 
                 ActionType at;
-                try {
-                    at = ActionType.fromJSON(actionJSON);
-                } catch (Exception e) {
-                    System.out.println(actionJSON.toString(2));
-                    throw e;
-                }
+                at = ActionType.fromJSON(actionJSON);
                 String name = at.getName();
 
                 actionTypes.get(blockType).put(name, at);

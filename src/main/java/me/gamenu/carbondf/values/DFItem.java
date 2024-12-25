@@ -57,7 +57,7 @@ public abstract class DFItem implements ToJSONObject {
         /** Styled Text value */
         STYLED_TEXT("comp"),
         /** String value */
-        STRING("str"),
+        STRING("txt"),
         /** Location value */
         LOCATION("loc"),
         /** Vector value */
