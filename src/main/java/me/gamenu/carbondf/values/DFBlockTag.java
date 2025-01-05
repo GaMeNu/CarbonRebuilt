@@ -76,7 +76,8 @@ public class DFBlockTag extends DFItem{
 
     public DFBlockTag setOption(String option) {
         if (!validOptions.contains(option)) {
-            throw new InvalidFieldException("Invalid option \"" + option + "\" for tag \"" + tagName + "\"");
+            throw new InvalidFieldException("Invalid option \"" + option + "\" for tag \"" + tagName + "\". " +
+                    "Valid options: \"" + String.join("\", \"", validOptions) + "\"");
         }
         this.option = option;
         return this;

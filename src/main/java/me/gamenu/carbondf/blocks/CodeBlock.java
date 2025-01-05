@@ -1,7 +1,9 @@
 package me.gamenu.carbondf.blocks;
 
+import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import me.gamenu.carbondf.types.ActionType;
 import me.gamenu.carbondf.types.BlockType;
+import me.gamenu.carbondf.values.DFBlockTag;
 import me.gamenu.carbondf.values.DFItem;
 import me.gamenu.carbondf.values.DFVariable;
 import org.json.JSONObject;
@@ -134,7 +136,12 @@ public class CodeBlock extends Block {
     }
 
     public CodeBlock setTagOption(String name, String option) {
-        this.tags().getTag(name).setOption(option);
+        DFBlockTag tag = this.tags().getTag(name);
+        if (tag == null) {
+            throw new InvalidFieldException(String.format("Invalid tag name \"%s\" for action name \"%s\". Valid tags: %s",
+                    name, action.getName(), "\"" + String.join("\", \"", this.tags().orderedTagNames) + "\""));
+        }
+        tag.setOption(option);
         return this;
     }
 
@@ -167,8 +174,11 @@ public class CodeBlock extends Block {
     }
 
     @Override
-    public JSONObject build() {
-        return super.build();
+    public JSONObject buildJSON() {
+        if (action.getReturnValues() != null) {
+            System.out.println(block.getName() + "::" + action.getName() + ": " + action.getReturnValues());
+        }
+        return super.buildJSON();
     }
 
     public enum Attribute {

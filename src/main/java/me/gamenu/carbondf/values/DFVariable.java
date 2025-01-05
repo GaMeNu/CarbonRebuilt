@@ -67,6 +67,21 @@ public class DFVariable extends DFItem {
      *
      * @param name  name of the variable
      * @param scope scope of the variable
+     * @param type type of the variable
+     * @return the newly created variable
+     */
+    public static DFVariable typed(String name, Scope scope, Type type) {
+        return typed(name, scope, new TypeSet(type));
+    }
+
+    /**
+     * <p>Create a new type-checked (strongly typed) variable</p>
+     *
+     * <p><b>NOTE:</b> In general, it is not recommended to mix the use of Typed and Dynamic variables,
+     * as it may result in unexpected behavior when assigning from Dynamic to Typed variables.</p>
+     *
+     * @param name  name of the variable
+     * @param scope scope of the variable
      * @param types type of the variable
      * @return the newly created variable
      */
@@ -281,7 +296,7 @@ public class DFVariable extends DFItem {
     /**
      *
      * Specifies what Kind a DFVariable is.
-     * <table style="width:300px;">
+     * <table>
      *     <caption>Summary of VarKind values</caption>
      *     <tr>
      *         <th>VarKind</th>

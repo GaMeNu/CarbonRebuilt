@@ -13,7 +13,7 @@ public interface DFBuildable {
      */
     JSONObject toJSON();
 
-    default JSONObject build() {
+    default JSONObject buildJSON() {
         return toJSON();
     }
 }

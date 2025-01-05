@@ -11,6 +11,7 @@ public class Main {
         Template template = new Template();
 
         template
+                .addBlock(new CodeBlock("event", "Join"))
                 .addBlock(new CodeBlock("player_action", "SendMessage"))
                 .addBlock(new CodeBlock("set_var", "=")
                         .addItem(DFVariable.typed("foo", DFVariable.Scope.GLOBAL, new TypeSet(DFItem.Type.NUMBER)))
@@ -48,9 +49,15 @@ public class Main {
                                                 .addItem(new DFNumber(1))
                                         )
                         )
+                )
+                .addBlock(
+                        new CodeBlock("set_var", "AlignLoc")
+                                .setTagOption("Rotation", "Remove rotation")
+                                .addItem(DFVariable.typed("loc", DFVariable.Scope.LINE, DFItem.Type.LOCATION))
+                                .addItem(new DFGameValue("Location", Target.DEFAULT))
                 );
 
-        System.out.println(template.build().toString(0));
+        System.out.println(template.buildJSON().toString(0));
     }
 
 }

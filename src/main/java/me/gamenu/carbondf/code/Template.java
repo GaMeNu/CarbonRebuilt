@@ -23,8 +23,8 @@ public class Template extends BlocksList implements DFBuildable {
      * @return Built JSON object of the template
      */
     @Override
-    public JSONObject build() {
+    public JSONObject buildJSON() {
         DFVariable.clearLineScope();
-        return DFBuildable.super.build();
+        return DFBuildable.super.buildJSON();
     }
 }

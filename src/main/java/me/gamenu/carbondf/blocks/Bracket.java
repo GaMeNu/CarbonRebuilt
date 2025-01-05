@@ -31,7 +31,7 @@ public class Bracket extends TemplateValue {
 
     /**
      * The type of Bracket
-     * <table style="width: 300px;">
+     * <table>
      *     <tr>
      *         <td>{@link Bracket.Type#NORMAL}</td>
      *         <td>A normal Bracket, after IF blocks</td>
@@ -59,7 +59,7 @@ public class Bracket extends TemplateValue {
 
     /**
      * Direction of the bracket.
-     * <table style="width: 300px;">
+     * <table>
      *     <tr>
      *         <td>{@link Direction#OPEN}</td>
      *         <td>An open bracket, at the start of a SubList</td>
