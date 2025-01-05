@@ -1,8 +1,11 @@
-package me.gamenu.carbondf.code;
+package me.gamenu.carbondf.blocks;
 
 import me.gamenu.carbondf.types.BlockType;
 import org.json.JSONObject;
 
+/**
+ * Represents a single DiamondFire Block of any type.
+ */
 public abstract class Block extends TemplateValue {
     BlockType block;
     public Block(BlockType block) {

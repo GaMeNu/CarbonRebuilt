@@ -112,4 +112,9 @@ public class TypeSet implements Set<DFItem.Type> {
             else return value.toString();
         }).collect(Collectors.joining(", ")) + "]";
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return types.equals(obj) && obj instanceof TypeSet;
+    }
 }

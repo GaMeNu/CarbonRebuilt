@@ -10,7 +10,7 @@
 | Block Tags                        | DONE                                               |
 | Return system                     | Support for PARAMETERS only                        |
 | SubAction blocks                  | DONE                                               |                                                    |
-| Global token center (vars, funcs) |                                                    |    
-| Apply Type System to funcCalls    |                                                    |
+| Global token center (vars, funcs) | vars done                                          |    
+| Apply Type System to funcCalls    |                                                    |                                                    |
 | Templates                         | DONE (hopefully?)                                  |
 

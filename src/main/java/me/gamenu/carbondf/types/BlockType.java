@@ -1,6 +1,6 @@
 package me.gamenu.carbondf.types;
 
-import me.gamenu.carbondf.code.Target;
+import me.gamenu.carbondf.blocks.Target;
 import me.gamenu.carbondf.etc.DBCUtils;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
 

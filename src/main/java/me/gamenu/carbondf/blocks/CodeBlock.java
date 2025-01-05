@@ -1,6 +1,5 @@
-package me.gamenu.carbondf.code;
+package me.gamenu.carbondf.blocks;
 
-import me.gamenu.carbondf.etc.ToJSONObject;
 import me.gamenu.carbondf.types.ActionType;
 import me.gamenu.carbondf.types.BlockType;
 import me.gamenu.carbondf.values.DFItem;
@@ -10,53 +9,79 @@ import org.json.JSONObject;
 /**
  * This class represents a single CodeBlock
  */
-public class CodeBlock extends Block implements ToJSONObject {
-    private ActionType action;
+public class CodeBlock extends Block {
+    private final ActionType action;
     private ActionType subAction;
     private Target target;
 
-    private CodeBlockArgs args;
+    private final CodeBlockArgs args;
     private Attribute attribute;
 
-    public CodeBlock(String blockName, String actionName) {
-        this(ActionType.byName(blockName, actionName));
+    /**
+     * Constructs a new CodeBlock based on the block ID and the action's name
+     * @param blockID Block ID to get action by
+     * @param actionName Action Name to get
+     */
+    public CodeBlock(String blockID, String actionName) {
+        this(ActionType.byName(blockID, actionName));
     }
 
-    public CodeBlock(String blockName, String actionName, Target target) {
-        this(ActionType.byName(blockName, actionName), target);
-    }
-
+    /**
+     * Constructs a new CodeBlock using an ActionType. BlockType will be stated inside the ActionType.
+     * @param action ActionType to use
+     */
     public CodeBlock(ActionType action) {
         this(action.getBlockType(), action);
     }
 
+    /**
+     * Constructs a new CodeBlock using an ActionType and a Block Type
+     * @param block BlockType to get Action with
+     * @param action ActionType to get
+     */
     public CodeBlock(BlockType block, ActionType action) {
-        this(block, action, null);
-    }
-
-    public CodeBlock(ActionType action, Target target) {
-        this(action.getBlockType(), action, target);
-    }
-
-    public CodeBlock(BlockType block, ActionType action, Target target) {
         super(block);
         this.action = action;
-        this.target = target;
 
         this.args = new CodeBlockArgs(this.action);
     }
 
+    /**
+     * Gets the block's ActionType
+     * @return the block's ActionType
+     */
     public ActionType getAction() {
         return action;
     }
 
+    /**
+     * Set the block's Sub-ActionType
+     * @param subAction ActionType to set as sub action
+     * @return the block's Sub-Action
+     */
     public CodeBlock setSubAction(ActionType subAction) {
         this.subAction = subAction;
         return this;
     }
 
+    /**
+     * Set the block's Sub-ActionType by the ActionType's Block ID and Action Name
+     * @param blockID Block ID to get action by
+     * @param actionName Action Name to get
+     * @return the Action Type
+     */
     public CodeBlock setSubAction(String blockID, String actionName) {
         this.subAction = ActionType.byName(blockID, actionName);
+        return this;
+    }
+
+    /**
+     * Set the block's Target
+     * @param target The block's new target
+     * @return this
+     */
+    public CodeBlock setTarget(Target target) {
+        this.target = target;
         return this;
     }
 
@@ -68,6 +93,11 @@ public class CodeBlock extends Block implements ToJSONObject {
         return target;
     }
 
+    /**
+     * Set the block's Attribute.
+     * @param attribute The block's attribute to set
+     * @return this
+     */
     public CodeBlock setAttribute(Attribute attribute) {
         this.attribute = attribute;
         return this;
@@ -129,9 +159,17 @@ public class CodeBlock extends Block implements ToJSONObject {
             res.put("subAction", subAction.getName());
         }
 
+        if (this.attribute != null) {
+            res.put("attribute", attribute.getId());
+        }
+
         return res;
     }
 
+    @Override
+    public JSONObject build() {
+        return super.build();
+    }
 
     public enum Attribute {
         NOT("NOT"),

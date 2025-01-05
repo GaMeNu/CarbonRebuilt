@@ -1,4 +1,4 @@
-package me.gamenu.carbondf.code;
+package me.gamenu.carbondf.blocks;
 
 import me.gamenu.carbondf.types.ActionType;
 import me.gamenu.carbondf.types.BlockType;

@@ -1,9 +1,16 @@
 package me.gamenu.carbondf.values;
 
+import me.gamenu.carbondf.exceptions.DuplicateEntryException;
 import me.gamenu.carbondf.exceptions.TypeException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class DFVariable extends DFItem {
+
+    /** A map of all existing variable tokens */
+    private static final Map<String, DFVariable> varMap = new HashMap<>();
 
     /**
      * Name of the variable
@@ -23,7 +30,7 @@ public class DFVariable extends DFItem {
     /**
      * Internal value of the variable
      */
-    private DFItem internalValue;
+    private Type runtimeType;
 
     /**
      * Indicates whether this variable is a constant, strongly typed, or weakly typed.
@@ -35,17 +42,28 @@ public class DFVariable extends DFItem {
      *
      * @param name  name of the constant
      * @param scope scope of the constant
+     * @param value initial value of the variable
      * @return the newly created variable
      */
     public static DFVariable constant(String name, Scope scope, DFItem value) {
+        Type varType;
         if (value.getRealType() == Type.VARIABLE && value instanceof DFVariable) {
-            value = ((DFVariable) value).getValue();
+            varType = ((DFVariable) value).getRuntimeType();
+        } else if (value.getType().size() == 1) {
+            // Attempt to get the value's type if it's only 1 long
+            varType = value.getType().stream().toList().getFirst();
+        } else {
+            varType = Type.ANY;
         }
-        return new DFVariable(name, scope, new TypeSet(value.getType()), VarKind.CONSTANT, value);
+
+        return new DFVariable(name, scope, new TypeSet(value.getType()), VarKind.CONSTANT, varType);
     }
 
     /**
-     * Create a new type-checked (strongly typed) variable
+     * <p>Create a new type-checked (strongly typed) variable</p>
+     *
+     * <p><b>NOTE:</b> In general, it is not recommended to mix the use of Typed and Dynamic variables,
+     * as it may result in unexpected behavior when assigning from Dynamic to Typed variables.</p>
      *
      * @param name  name of the variable
      * @param scope scope of the variable
@@ -59,6 +77,9 @@ public class DFVariable extends DFItem {
     /**
      * Instantiate a new dynamic variable
      *
+     * <p><b>NOTE:</b> In general, it is not recommended to mix the use of Typed and Dynamic variables,
+     * as it may result in unexpected behavior when assigning from Dynamic to Typed variables.</p>
+     *
      * @param name  name of the variable
      * @param scope scope of the variable
      */
@@ -66,6 +87,19 @@ public class DFVariable extends DFItem {
         return new DFVariable(name, scope, new TypeSet(), VarKind.DYNAMIC, null);
     }
 
+    /**
+     * Get a variable that was already defined elsewhere
+     * @param name name of the variable to get
+     * @return variable
+     */
+    public static DFVariable get(String name) {
+        return varMap.get(name);
+    }
+
+
+    public static void clearLineScope() {
+        varMap.entrySet().removeIf(entry -> entry.getValue().getScope() == Scope.LINE);
+    }
     /**
      * The default constructor for DFVariable.<br/>
      * In general, it is recommended to instead use the following methods:<br/><br/>
@@ -77,10 +111,15 @@ public class DFVariable extends DFItem {
      * @param scope         Scope of the variable
      * @param types         Valid variable types (for typed values)
      * @param kind          Variable kind
-     * @param internalValue initial, internal value of the variable
+     * @param runtimeType initial, internal runtime type of the variable.
+     *                         This attribute may be mutated in dynamic and typed (multi) variables
      */
-    private DFVariable(String name, Scope scope, TypeSet types, VarKind kind, DFItem internalValue) {
+    private DFVariable(String name, Scope scope, TypeSet types, VarKind kind, Type runtimeType) {
         super(Type.VARIABLE);
+
+        if (varMap.containsKey(name))
+            throw new DuplicateEntryException("Variable with the name \"" + name + "\" already exists. Please use DFVariable.get() to get the existing instance.");
+
         this.name = name;
         this.scope = scope;
         this.varKind = kind;
@@ -90,7 +129,9 @@ public class DFVariable extends DFItem {
         else
             this.valueTypes = types;
 
-        this.internalValue = internalValue;
+        this.runtimeType = runtimeType;
+
+        varMap.put(name, this);
     }
 
     public String getName() {
@@ -101,87 +142,113 @@ public class DFVariable extends DFItem {
         return scope;
     }
 
+    public Type getRuntimeType() {
+        return runtimeType;
+    }
+
     /**
-     * <p>Set the variable's internal value.</p>
-     * <p>This is NOT the same as the SetVariable DiamondFire Code Block,
-     * and will not create a corresponding CodeBlock either.</p>
-     *
-     * @param valueToSet internal value to set
-     * @return this
+     * Safely sets the Variable's runtime type.
+     * @param typeToSet The Variable's type to set
+     * @return the variable
+     * @throws TypeException if the assignment is illegal
      */
-    public DFVariable setValue(DFItem valueToSet) {
-        if (varKind == VarKind.CONSTANT)
-            throw new TypeException("Cannot set a value on a constant variable");
-
-        TypeSet newTypes;
-        if (valueToSet.getRealType() == Type.VARIABLE
-                && valueToSet instanceof DFVariable varToSet) {
-            // Set the new value to the variable's internal value
-            valueToSet = varToSet.getValue();
-
-            // If the variable's value is null, we'll use its static TypeSet.
-            // If it does have a set value, we'll use its set value instead.
-            // Variable's may be declared but not have a value during compile, for example, with parameters
-            newTypes = (valueToSet == null) ?
-                    varToSet.getValue().getType() :
-                    new TypeSet(varToSet.getRealValueType());
-
-        } else {
-            // Set the currently set type to the currently set (runtime) type
-            newTypes = new TypeSet(valueToSet.getType());
+    public DFVariable setValueType(Type typeToSet) {
+        if (varKind == VarKind.CONSTANT) {
+            throw new TypeException("Cannot set a value on a CONSTANT variable");
         }
 
-        if (varKind == VarKind.TYPED && !valueTypes.contains(Type.ANY)) {
-            TypeSet common = new TypeSet(valueTypes);
-
-            common.retainAll(newTypes);
-            if (common.isEmpty()) {
-                throw new TypeException("Cannot assign value of type(s) " + newTypes + " to a variable \"" + name + "\" of type(s) " + valueTypes);
-            }
+        if (varKind == VarKind.TYPED && !valueTypes.contains(typeToSet)) {
+            throw new TypeException("Cannot assign value of type " + typeToSet + " to variable \"" + name + "\" of types " + valueTypes);
         }
 
+        this.runtimeType = typeToSet;
 
-        if (varKind != VarKind.TYPED)
-            // This is probably a bad idea
-            // TODO: Remove adding things to the TypeUnion at all
-            this.valueTypes.addAll(newTypes);
-
-        this.internalValue = valueToSet;
+        // Make sure we add this, because now this dynamic variable can contain this new type
+        // (This will be used for type safety if we want to go from Dynamic to Typed, even though
+        // the two should not be mixed together.)
+        if (varKind == VarKind.DYNAMIC && !valueTypes.contains(typeToSet))
+            this.valueTypes.add(typeToSet);
 
         return this;
     }
 
     /**
-     * Get the variable's possible types
+     * Safely sets the variable's type according to a TypeSet of possible options.
+     * A TypeSet of 1 item will also set the variable's runtime type.
+     * @param typesToSet Variable's possible types
+     * @return this
+     * @throws TypeException if the assignment is illegal
+     */
+    public DFVariable setValueType(TypeSet typesToSet) {
+
+        if (this.getVarKind() == VarKind.CONSTANT) {
+            throw new TypeException("Cannot set a value on a CONSTANT variable");
+        }
+
+        if (typesToSet.size() == 1) {
+            // Attempt to operate on given wrapped type as if it were a RUNTIME type, since it's non-ambiguous
+            return setValueType(typesToSet.stream().toList().getFirst());
+        }
+
+        if (getType().containsAll(typesToSet)) {
+            // We just set our own runtime type to null, since we don't know what it really is,
+            // so if we were to now assign THIS variable,
+            // we would be operating on valueTypes instead of the (now non-existent) runtime type
+            // (again, runtimeType should only be used when it is NOT ambiguous).
+            this.runtimeType = null;
+            return this;
+        }
+        throw new TypeException("Cannot guarantee type safety for assignment from types " + typesToSet
+                + " to types " + name + valueTypes);
+    }
+
+
+    /**
+     * <p>This method sets the "internal value" of this variable to the given value
+     * (or its own internal value, in case of a variable).</p>
+     *
+     * <p>(In reality, this method only sets the runtime/possible types of this variable.
+     * To follow the actual values, I'll have to just implement DF itself.)</p>
+     *
+     * @param value value to set
+     * @return this
+     * @throws TypeException if the assignment is illegal
+     */
+    public DFVariable setValue(DFItem value) {
+        // we assume getType() does its magic CORRECTLY and gives us the type(s) of the value
+        // (either runtime or possible, in case of variable (NOT the actual type of the value))
+        return setValueType(value.getType());
+    }
+
+    /**
+     * Get the variable's possible types, or the variable's current runtime type, if non-ambiguous.
      *
      * @return the variable's possible types
      */
     @Override
     public TypeSet getType() {
-        if (internalValue != null) {
-            return internalValue.getType();
+        if (runtimeType != null) {
+            // Wrap the ACTUAL runtime type of the variable
+            return new TypeSet(runtimeType);
         }
         return valueTypes;
     }
 
-    public DFItem getValue() {
-        return internalValue;
-    }
-
-    public VarKind getVarKind() {
-        return varKind;
+    /**
+     * This function is guaranteed to return the possible types of the variable,
+     * regardless of the current runtime type
+     * @return the possible runtime types
+     */
+    public TypeSet getPossibleTypes() {
+        return valueTypes;
     }
 
     /**
-     * Returns the variable's real value type.
-     * This has no effect if the value is a primitive, but if the value is, for example, a game value, this will return
-     * {@link Type#GAME_VALUE}
-     *
-     * @return variable's current value type OR {@link Type#NONE} if there is no internalValue
+     * Gets the {@link VarKind Kind} of the Variable.
+     * @return the Kind of the variable
      */
-    public TypeSet getRealValueType() {
-        if (internalValue == null) return new TypeSet(Type.NONE);
-        return internalValue.getType();
+    public VarKind getVarKind() {
+        return varKind;
     }
 
     @Override
@@ -211,7 +278,35 @@ public class DFVariable extends DFItem {
         }
     }
 
+    /**
+     *
+     * Specifies what Kind a DFVariable is.
+     * <table style="width:300px;">
+     *     <caption>Summary of VarKind values</caption>
+     *     <tr>
+     *         <th>VarKind</th>
+     *         <th>Type checked?</th>
+     *         <th>Immutable?</th>
+     *     </tr>
+     *     <tr>
+     *         <td>{@link VarKind#DYNAMIC}</td>
+     *         <td>X</td>
+     *         <td>X</td>
+     *     </tr>
+     *     <tr>
+     *         <td>{@link VarKind#TYPED}</td>
+     *         <td>V</td>
+     *         <td>X</td>
+     *     </tr>
+     *     <tr>
+     *         <td>{@link VarKind#CONSTANT}</td>
+     *         <td>V</td>
+     *         <td>V</td>
+     *     </tr>
+     * </table>
+     */
     public enum VarKind {
+        /** This Variable can be freely mutated. */
         DYNAMIC,
         TYPED,
         CONSTANT

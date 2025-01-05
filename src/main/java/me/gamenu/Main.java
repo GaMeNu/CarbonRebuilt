@@ -1,8 +1,8 @@
 package me.gamenu;
 
-import me.gamenu.carbondf.code.CodeBlock;
+import me.gamenu.carbondf.blocks.CodeBlock;
 import me.gamenu.carbondf.code.BlocksList;
-import me.gamenu.carbondf.code.Target;
+import me.gamenu.carbondf.blocks.Target;
 import me.gamenu.carbondf.code.Template;
 import me.gamenu.carbondf.values.*;
 
@@ -18,7 +18,7 @@ public class Main {
                 )
 
                 .addSubList(new CodeBlock("if_var", "=")
-                                .addItem(DFVariable.typed("foo", DFVariable.Scope.GLOBAL, new TypeSet(DFItem.Type.NUMBER)))
+                                .addItem(DFVariable.get("foo"))
                                 .addItem(new DFNumber(1)),
                         new BlocksList()
                                 .addBlock(
@@ -33,7 +33,7 @@ public class Main {
                         )
                         .addSubList(new CodeBlock("repeat", "While")
                                         .setSubAction("if_var", ">")
-                                        .addItem(DFVariable.typed("foo", DFVariable.Scope.GLOBAL, new TypeSet(DFItem.Type.NUMBER)))
+                                        .addItem(DFVariable.get("foo"))
                                         .addItem(new DFNumber(1)),
                                 new BlocksList()
                                         .addBlock(new CodeBlock("game_action", "Lightning")
@@ -44,13 +44,13 @@ public class Main {
                                                 .setTagOption("Alignment Mode", "Centered")
                                         )
                                         .addBlock(new CodeBlock("set_var", "-=")
-                                                .addItem(DFVariable.typed("foo", DFVariable.Scope.GLOBAL, new TypeSet(DFItem.Type.NUMBER)))
+                                                .addItem(DFVariable.get("foo"))
                                                 .addItem(new DFNumber(1))
                                         )
                         )
                 );
 
-        System.out.println(template.toJSON().toString(0));
+        System.out.println(template.build().toString(0));
     }
 
 }

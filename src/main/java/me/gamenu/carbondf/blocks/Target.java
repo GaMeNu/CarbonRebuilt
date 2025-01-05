@@ -1,4 +1,4 @@
-package me.gamenu.carbondf.code;
+package me.gamenu.carbondf.blocks;
 
 public enum Target {
     SELECTION("Selection"),

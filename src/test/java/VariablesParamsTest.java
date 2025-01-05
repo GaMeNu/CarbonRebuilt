@@ -1,10 +1,23 @@
 import me.gamenu.carbondf.exceptions.TypeException;
 import me.gamenu.carbondf.values.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VariablesParamsTest {
+
+    @AfterAll
+    static void checkVars() {
+        DFVariable.clearLineScope();
+        System.out.println(DFVariable.get("dingus"));
+    }
+
+    @BeforeAll
+    static void cleanLineVars() {
+        DFVariable.clearLineScope();
+    }
 
     @Test
     void paramAccepts() {
@@ -33,6 +46,7 @@ public class VariablesParamsTest {
 
         dynVar.setValue(new DFGameValue("CPU Usage"));
         assertTrue(param.canAcceptItem(dynVar));
+        DFVariable.clearLineScope();
     }
 
     @Test
@@ -47,9 +61,10 @@ public class VariablesParamsTest {
         DFVariable var2 = param.buildVariable();
         assertEquals(var, var2);
         assertEquals(var.getName(), PARAM_NAME);
+        DFVariable.clearLineScope();
     }
 
-    @Test()
+    @Test
     void realtimeTypeAssignment() {
         DFVariable src = DFVariable.typed("src", DFVariable.Scope.LINE, new TypeSet(DFItem.Type.NUMBER));
         DFVariable mid = DFVariable.typed("mid", DFVariable.Scope.LINE, new TypeSet(DFItem.Type.NUMBER, DFItem.Type.STRING));
@@ -57,9 +72,23 @@ public class VariablesParamsTest {
 
         src.setValue(new DFNumber(1));
         mid.setValue(src);
-        assertEquals(src.getValue(), mid.getValue());
+        assertEquals(src.getRuntimeType(), mid.getRuntimeType());
 
         assertThrows(TypeException.class, () -> dst.setValue(mid));
+        DFVariable.clearLineScope();
+    }
+
+    @Test
+    void realtimeTypeAssignmentDynamic() {
+        DFVariable src = DFVariable.typed("src", DFVariable.Scope.LINE, new TypeSet(DFItem.Type.NUMBER, DFItem.Type.STRING));
+        DFVariable dyn = DFVariable.dynamic("dyn", DFVariable.Scope.LINE);
+        DFVariable dst1 = DFVariable.typed("dst1", DFVariable.Scope.LINE, new TypeSet(DFItem.Type.NUMBER));
+
+        src.setValue(new DFNumber(1));
+        dyn.setValue(src);
+
+        assertEquals(src.getType(), dyn.getType());
+        DFVariable.clearLineScope();
     }
 
     @Test
@@ -68,7 +97,7 @@ public class VariablesParamsTest {
         var.setValue(new DFGameValue("CPU Usage"));
 
         assertTrue(var.getType().contains(DFItem.Type.NUMBER));
-        assertEquals(var.getValue().getRealType(), DFItem.Type.GAME_VALUE);
+        DFVariable.clearLineScope();
     }
 
     @Test
@@ -77,7 +106,7 @@ public class VariablesParamsTest {
                 .build();
 
         assertTrue(param.canAcceptItem(new DFGameValue("CPU Usage")));
-
+        DFVariable.clearLineScope();
     }
 
 

@@ -1,5 +1,9 @@
 package me.gamenu.carbondf.code;
 
+import me.gamenu.carbondf.blocks.Block;
+import me.gamenu.carbondf.blocks.Bracket;
+import me.gamenu.carbondf.blocks.ElseBlock;
+import me.gamenu.carbondf.blocks.TemplateValue;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import me.gamenu.carbondf.types.BlockType;
 

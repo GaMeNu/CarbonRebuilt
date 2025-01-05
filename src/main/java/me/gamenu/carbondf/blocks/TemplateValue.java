@@ -1,9 +1,9 @@
-package me.gamenu.carbondf.code;
+package me.gamenu.carbondf.blocks;
 
-import me.gamenu.carbondf.etc.ToJSONObject;
+import me.gamenu.carbondf.etc.DFBuildable;
 import org.json.JSONObject;
 
-public abstract class TemplateValue implements ToJSONObject {
+public abstract class TemplateValue implements DFBuildable {
 
     Category cat;
 

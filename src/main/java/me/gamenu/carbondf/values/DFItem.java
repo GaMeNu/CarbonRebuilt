@@ -1,6 +1,6 @@
 package me.gamenu.carbondf.values;
 
-import me.gamenu.carbondf.etc.ToJSONObject;
+import me.gamenu.carbondf.etc.DFBuildable;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -8,7 +8,7 @@ import java.util.HashMap;
 /**
  * The base for all DiamondFire Items and Values
  */
-public abstract class DFItem implements ToJSONObject {
+public abstract class DFItem implements DFBuildable {
 
     /** The type for the current item */
     private final Type type;

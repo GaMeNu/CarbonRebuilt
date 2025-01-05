@@ -1,6 +1,6 @@
-package me.gamenu.carbondf.code;
+package me.gamenu.carbondf.blocks;
 
-import me.gamenu.carbondf.etc.ToJSONObject;
+import me.gamenu.carbondf.etc.DFBuildable;
 import me.gamenu.carbondf.exceptions.ArgsOverflowException;
 import me.gamenu.carbondf.exceptions.InvalidItemException;
 import me.gamenu.carbondf.types.ActionType;
@@ -12,7 +12,7 @@ import org.json.JSONObject;
 import java.util.*;
 
 
-public class CodeBlockArgs implements ToJSONObject {
+public class CodeBlockArgs implements DFBuildable {
     public final int ARGS_CONTAINER_SIZE = 27;
     // TODO: This is not good enough for functions (DFParameter),
     //       will have to add check for FUNCTION mode (only DFParameters)
