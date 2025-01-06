@@ -4,22 +4,25 @@ import me.gamenu.carbondf.blocks.CodeBlock;
 import me.gamenu.carbondf.code.BlocksList;
 import me.gamenu.carbondf.blocks.Target;
 import me.gamenu.carbondf.code.Template;
+import me.gamenu.carbondf.code.TemplateManager;
 import me.gamenu.carbondf.values.*;
 
 public class Main {
     public static void main(String[] args) {
-        Template template = new Template();
+        TemplateManager tm = new TemplateManager();
+        VarManager vm = tm.vars();
 
+        Template template = tm.create();
         template
                 .addBlock(new CodeBlock("event", "Join"))
                 .addBlock(new CodeBlock("player_action", "SendMessage"))
                 .addBlock(new CodeBlock("set_var", "=")
-                        .addItem(DFVariable.typed("foo", DFVariable.Scope.GLOBAL, new TypeSet(DFItem.Type.NUMBER)))
+                        .addItem(vm.typed("foo", DFVariable.Scope.GLOBAL, DFItem.Type.NUMBER))
                         .addItem(new DFNumber(100))
                 )
 
                 .addSubList(new CodeBlock("if_var", "=")
-                                .addItem(DFVariable.get("foo"))
+                                .addItem(vm.get("foo"))
                                 .addItem(new DFNumber(1)),
                         new BlocksList()
                                 .addBlock(
@@ -34,7 +37,7 @@ public class Main {
                         )
                         .addSubList(new CodeBlock("repeat", "While")
                                         .setSubAction("if_var", ">")
-                                        .addItem(DFVariable.get("foo"))
+                                        .addItem(vm.get("foo"))
                                         .addItem(new DFNumber(1)),
                                 new BlocksList()
                                         .addBlock(new CodeBlock("game_action", "Lightning")
@@ -45,7 +48,7 @@ public class Main {
                                                 .setTagOption("Alignment Mode", "Centered")
                                         )
                                         .addBlock(new CodeBlock("set_var", "-=")
-                                                .addItem(DFVariable.get("foo"))
+                                                .addItem(vm.get("foo"))
                                                 .addItem(new DFNumber(1))
                                         )
                         )
@@ -53,10 +56,11 @@ public class Main {
                 .addBlock(
                         new CodeBlock("set_var", "AlignLoc")
                                 .setTagOption("Rotation", "Remove rotation")
-                                .addItem(DFVariable.typed("loc", DFVariable.Scope.LINE, DFItem.Type.LOCATION))
+                                .addItem(vm.typed("loc", DFVariable.Scope.LINE, DFItem.Type.LOCATION))
                                 .addItem(new DFGameValue("Location", Target.DEFAULT))
                 );
 
+        vm.clearLineScope();
         System.out.println(template.buildJSON().toString(0));
     }
 

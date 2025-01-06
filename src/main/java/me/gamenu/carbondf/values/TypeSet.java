@@ -3,6 +3,9 @@ package me.gamenu.carbondf.values;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * This class represents a type that consists of multiple possible types.
+ */
 public class TypeSet implements Set<DFItem.Type> {
     Set<DFItem.Type> types;
 

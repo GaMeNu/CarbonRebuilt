@@ -16,6 +16,10 @@ public class DataBlock extends CodeBlock {
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public JSONObject toJSON() {
         return super.toJSON()

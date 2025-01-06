@@ -1,16 +1,9 @@
 package me.gamenu.carbondf.values;
 
-import me.gamenu.carbondf.exceptions.DuplicateEntryException;
 import me.gamenu.carbondf.exceptions.TypeException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class DFVariable extends DFItem {
-
-    /** A map of all existing variable tokens */
-    private static final Map<String, DFVariable> varMap = new HashMap<>();
 
     /**
      * Name of the variable
@@ -45,13 +38,13 @@ public class DFVariable extends DFItem {
      * @param value initial value of the variable
      * @return the newly created variable
      */
-    public static DFVariable constant(String name, Scope scope, DFItem value) {
+    static DFVariable constant(String name, Scope scope, DFItem value) {
         Type varType;
         if (value.getRealType() == Type.VARIABLE && value instanceof DFVariable) {
             varType = ((DFVariable) value).getRuntimeType();
         } else if (value.getType().size() == 1) {
             // Attempt to get the value's type if it's only 1 long
-            varType = value.getType().stream().toList().getFirst();
+            varType = value.getType().stream().toList().get(0);
         } else {
             varType = Type.ANY;
         }
@@ -70,7 +63,7 @@ public class DFVariable extends DFItem {
      * @param type type of the variable
      * @return the newly created variable
      */
-    public static DFVariable typed(String name, Scope scope, Type type) {
+    static DFVariable typed(String name, Scope scope, Type type) {
         return typed(name, scope, new TypeSet(type));
     }
 
@@ -85,7 +78,7 @@ public class DFVariable extends DFItem {
      * @param types type of the variable
      * @return the newly created variable
      */
-    public static DFVariable typed(String name, Scope scope, TypeSet types) {
+    static DFVariable typed(String name, Scope scope, TypeSet types) {
         return new DFVariable(name, scope, types, VarKind.TYPED, null);
     }
 
@@ -98,23 +91,10 @@ public class DFVariable extends DFItem {
      * @param name  name of the variable
      * @param scope scope of the variable
      */
-    public static DFVariable dynamic(String name, Scope scope) {
+    static DFVariable dynamic(String name, Scope scope) {
         return new DFVariable(name, scope, new TypeSet(), VarKind.DYNAMIC, null);
     }
 
-    /**
-     * Get a variable that was already defined elsewhere
-     * @param name name of the variable to get
-     * @return variable
-     */
-    public static DFVariable get(String name) {
-        return varMap.get(name);
-    }
-
-
-    public static void clearLineScope() {
-        varMap.entrySet().removeIf(entry -> entry.getValue().getScope() == Scope.LINE);
-    }
     /**
      * The default constructor for DFVariable.<br/>
      * In general, it is recommended to instead use the following methods:<br/><br/>
@@ -132,9 +112,6 @@ public class DFVariable extends DFItem {
     private DFVariable(String name, Scope scope, TypeSet types, VarKind kind, Type runtimeType) {
         super(Type.VARIABLE);
 
-        if (varMap.containsKey(name))
-            throw new DuplicateEntryException("Variable with the name \"" + name + "\" already exists. Please use DFVariable.get() to get the existing instance.");
-
         this.name = name;
         this.scope = scope;
         this.varKind = kind;
@@ -145,8 +122,6 @@ public class DFVariable extends DFItem {
             this.valueTypes = types;
 
         this.runtimeType = runtimeType;
-
-        varMap.put(name, this);
     }
 
     public String getName() {
@@ -202,7 +177,7 @@ public class DFVariable extends DFItem {
 
         if (typesToSet.size() == 1) {
             // Attempt to operate on given wrapped type as if it were a RUNTIME type, since it's non-ambiguous
-            return setValueType(typesToSet.stream().toList().getFirst());
+            return setValueType(typesToSet.stream().toList().get(0));
         }
 
         if (getType().containsAll(typesToSet)) {

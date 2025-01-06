@@ -153,7 +153,7 @@ public class CodeBlock extends Block {
     @Override
     public JSONObject toJSON() {
         JSONObject res = new JSONObject()
-                .put("id", cat.getId())
+                .put("id", category.getId())
                 .put("block", block.getId())
                 .put("action", action.getName())
                 .put("args", args.toJSON());
@@ -175,8 +175,19 @@ public class CodeBlock extends Block {
 
     @Override
     public JSONObject buildJSON() {
+        // Confirm return values' var getter
         if (action.getReturnValues() != null) {
-            System.out.println(block.getName() + "::" + action.getName() + ": " + action.getReturnValues());
+            DFItem returned = items().get(0);
+            if (returned == null
+                    || returned.getRealType() != DFItem.Type.VARIABLE
+                    || !(returned instanceof DFVariable)
+            ) {
+                throw new InvalidFieldException("First argument of a block with return values must be a variable");
+            }
+
+            // Set the values of the variable for the action
+            DFVariable var = (DFVariable) items().get(0);
+            var.setValueType(action.getReturnValues());
         }
         return super.buildJSON();
     }

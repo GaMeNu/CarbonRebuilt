@@ -4,7 +4,7 @@
 |-----------------------------------|----------------------------------------------------|
 | DiamondFire code values           | DONE                                               |
 | Variables, parameters             | DONE                                               |
-| Type System                       | Variables and Parameters                           |
+| Type System                       | Variables, Parameters, Builtins returnValues       |
 | Code blocks                       | Mostly Done<br/>(need to add support for dynamics) |
 | Code actions                      | Mostly Done<br/>(dynamics)                         |
 | Block Tags                        | DONE                                               |

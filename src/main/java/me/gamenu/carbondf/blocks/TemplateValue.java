@@ -5,15 +5,19 @@ import org.json.JSONObject;
 
 public abstract class TemplateValue implements DFBuildable {
 
-    Category cat;
+    Category category;
 
     public TemplateValue(Category cat) {
-        this.cat = cat;
+        this.category = cat;
+    }
+
+    public Category getCategory() {
+        return category;
     }
 
     @Override
     public JSONObject toJSON() {
-        return new JSONObject().put("id", cat.getId());
+        return new JSONObject().put("id", category.getId());
     }
 
     public enum Category {

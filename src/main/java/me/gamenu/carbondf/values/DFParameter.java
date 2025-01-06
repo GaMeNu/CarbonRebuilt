@@ -1,5 +1,6 @@
 package me.gamenu.carbondf.values;
 
+import me.gamenu.carbondf.exceptions.DuplicateEntryException;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import me.gamenu.carbondf.exceptions.TypeException;
 import org.json.JSONObject;
@@ -69,20 +70,37 @@ public class DFParameter extends DFItem {
         DFItem defaultValue;
 
         /**
-         * Creates a new (unchecked) Parameter Builder
-         * @param name The name of the parameters
+         * The Parameter's VarManager to add the generated variable to.
+         * Will not be added to the final parameter.
          */
-        public Builder(String name) {
-            this(name, null);
+        VarManager vm;
+
+        /**
+         * Creates a new (unchecked) Parameter Builder
+         * @param vm VarManager to add the matching variable to
+         * @param name Name of the parameter
+         */
+        public Builder(VarManager vm, String name) {
+            this(vm, name, (TypeSet) null);
+        }
+
+        /**
+         * Creates a new Parameter Builder
+         * @param vm VarManager to add the matching variable to
+         * @param name Name of the parameter
+         * @param type Type of the parameter
+         */
+        public Builder(VarManager vm, String name, Type type) {
+            this(vm, name, new TypeSet(type));
         }
 
         /**
          * Creates a new Parameter Builder
          *
-         * @param name The name of the parameter
-         * @param types The types of the parameter (set null for a non type-checked parameter)
+         * @param name Name of the parameter
+         * @param types Types of the parameter (set null for a non type-checked parameter)
          */
-        public Builder(String name, TypeSet types) {
+        public Builder(VarManager vm, String name, TypeSet types) {
             // Make sure we have a valid name
             if (name == null || name.isBlank()) throw new InvalidFieldException("Name cannot be empty!");
 
@@ -101,7 +119,7 @@ public class DFParameter extends DFItem {
                     throw new InvalidFieldException("Cannot set the parameter type to " + type);
             });
 
-
+            this.vm = vm;
             this.name = name;
             this.paramTypes = types;
             this.plural = false;
@@ -222,11 +240,20 @@ public class DFParameter extends DFItem {
                 throw new InvalidFieldException("Returned parameters cannot be optional or plural");
             }
 
+            if (vm.has(name)) {
+                throw new DuplicateEntryException(String.format("Variable name \"%s\" already exists", name));
+            }
 
+            if (typeChecked) {
+                vm.typed(name, DFVariable.Scope.LINE, paramTypes);
+            } else {
+                vm.dynamic(name, DFVariable.Scope.LINE);
+            }
 
             return new DFParameter(
                     name,
                     description,
+                    vm.get(name),
                     paramTypes,
                     plural,
                     optional,
@@ -252,9 +279,9 @@ public class DFParameter extends DFItem {
 
     /**
      * This saves the instance of the variable matching the parameter,
-     * so that {@link DFParameter#buildVariable()} always returns the same instance
+     * so that {@link DFParameter#getVariable()} always returns the same instance
      */
-    DFVariable builtVariable;
+    DFVariable matchingVar;
 
     /**
      * This is an internal constructor for the DFParameter class.
@@ -270,18 +297,21 @@ public class DFParameter extends DFItem {
      *                    Used only in CarbonDF
      * @param defaultValue The default value of the DFParameter, in case it is optional and did not receive a value.
      */
-    protected DFParameter(String name,
-                          String description,
-                          TypeSet types,
-                          boolean plural,
-                          boolean optional,
-                          boolean returned,
-                          boolean typeChecked,
-                          DFItem defaultValue
+    protected DFParameter(
+            String name,
+            String description,
+            DFVariable matchingVar,
+            TypeSet types,
+            boolean plural,
+            boolean optional,
+            boolean returned,
+            boolean typeChecked,
+            DFItem defaultValue
     ) {
         super(Type.PARAMETER);
         this.name = name;
         this.description = description;
+        this.matchingVar = matchingVar;
         this.paramTypes = types;
         this.plural = plural;
         this.optional = optional;
@@ -291,20 +321,12 @@ public class DFParameter extends DFItem {
     }
 
     /**
-     * On first call, this method builds a new {@link DFVariable}, matching the parameter, and store it.<br/>
-     * On second call onwards, the method will return the same instance of the variable.
+     * Returns the matching LINE variable built for this parameter
      *
      * @return the matching variable for this parameter
      */
-    public DFVariable buildVariable() {
-        if (builtVariable != null) return builtVariable;
-
-        TypeSet varTypes = paramTypes;
-        builtVariable = typeChecked ?
-                DFVariable.typed(name, DFVariable.Scope.LINE, varTypes) :
-                DFVariable.dynamic(name, DFVariable.Scope.LINE);
-
-        return builtVariable;
+    public DFVariable getVariable() {
+        return matchingVar;
     }
 
     /**
@@ -326,7 +348,7 @@ public class DFParameter extends DFItem {
      */
     public Type getParamRealType() {
         if (returned) return Type.VARIABLE;
-        if (paramTypes.size() == 1) return paramTypes.stream().toList().getFirst();
+        if (paramTypes.size() == 1) return paramTypes.stream().toList().get(0);
         return Type.ANY;
     }
 
