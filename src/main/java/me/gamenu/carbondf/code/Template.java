@@ -15,9 +15,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Template extends BlocksList implements DFBuildable {
+
+    // This is here to make it impossible to init templates without the manager
+    // Basically hiding the constructor for Template while leaving the constructor for BlocksList intact
+    Template() {
+        super();
+    }
 
     TemplateMetadata metadata;
 
@@ -88,6 +95,38 @@ public class Template extends BlocksList implements DFBuildable {
         }
 
         return new JSONObject().put("blocks", blocksJSON);
+    }
+
+    // Overridden methods that return Templates instead of BlocksList for compat with assigning a stack to a variable
+    // Might be REMOVED in a future version!
+    @Override
+    public Template addBlock(TemplateValue value) {
+        super.addBlock(value);
+        return this;
+    }
+
+    @Override
+    public Template addSubList(Block block, BlocksList subList) {
+        super.addSubList(block, subList);
+        return this;
+    }
+
+    @Override
+    public BlocksList addSubList(Block block, Supplier<BlocksList> subListSupplier) {
+        super.addSubList(block, subListSupplier);
+        return this;
+    }
+
+    @Override
+    public Template elseBlock(BlocksList subList) {
+        super.elseBlock(subList);
+        return this;
+    }
+
+    @Override
+    public Template elseBlock(Supplier<BlocksList> subListSupplier) {
+        super.elseBlock(subListSupplier);
+        return this;
     }
 
     public static class TemplateMetadata {

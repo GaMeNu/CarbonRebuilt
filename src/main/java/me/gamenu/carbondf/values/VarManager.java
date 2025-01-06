@@ -18,7 +18,7 @@ public class VarManager {
 
     private DFVariable updateVarMap(DFVariable var) {
         if (!checkVarMap(var.getName()))
-            throw new DuplicateEntryException("Variable with the name \"" + var.getName() + "\" already exists. Please use DFVariable.get() to get the existing instance.");
+            throw new DuplicateEntryException("Variable with the name \"" + var.getName() + "\" already exists. Please use VarManager#get() to get the existing instance.");
         varMap.put(var.getName(), var);
         return var;
     }

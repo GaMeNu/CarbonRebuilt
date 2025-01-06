@@ -1,9 +1,8 @@
 package me.gamenu;
 
 import me.gamenu.carbondf.blocks.CodeBlock;
-import me.gamenu.carbondf.code.BlocksList;
 import me.gamenu.carbondf.blocks.Target;
-import me.gamenu.carbondf.code.Template;
+import me.gamenu.carbondf.code.BlocksList;
 import me.gamenu.carbondf.code.TemplateManager;
 import me.gamenu.carbondf.values.*;
 
@@ -12,15 +11,13 @@ public class Main {
         TemplateManager tm = new TemplateManager();
         VarManager vm = tm.vars();
 
-        Template template = tm.create();
-        template
-                .addBlock(new CodeBlock("event", "Join"))
+        tm
+                .create(new CodeBlock("event", "Join"))
                 .addBlock(new CodeBlock("player_action", "SendMessage"))
                 .addBlock(new CodeBlock("set_var", "=")
                         .addItem(vm.typed("foo", DFVariable.Scope.GLOBAL, DFItem.Type.NUMBER))
                         .addItem(new DFNumber(100))
                 )
-
                 .addSubList(new CodeBlock("if_var", "=")
                                 .addItem(vm.get("foo"))
                                 .addItem(new DFNumber(1)),
@@ -60,8 +57,7 @@ public class Main {
                                 .addItem(new DFGameValue("Location", Target.DEFAULT))
                 );
 
-        vm.clearLineScope();
-        System.out.println(template.buildJSON().toString(0));
+        System.out.println(tm.get("Join").buildJSON().toString(0));
     }
 
 }
