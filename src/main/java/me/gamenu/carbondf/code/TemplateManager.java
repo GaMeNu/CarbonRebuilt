@@ -40,6 +40,8 @@ public class TemplateManager {
         vm.clearLineScope();
         Template newTemplate = new Template();
         newTemplate.setMetadata(metadata);
+        newTemplate.setTemplateManager(this);
+
         newTemplate.add(starterBlock);
 
         templates.put(tlName, newTemplate);

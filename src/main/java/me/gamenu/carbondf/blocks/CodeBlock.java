@@ -1,6 +1,7 @@
 package me.gamenu.carbondf.blocks;
 
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
+import me.gamenu.carbondf.exceptions.InvalidItemException;
 import me.gamenu.carbondf.types.ActionType;
 import me.gamenu.carbondf.types.BlockType;
 import me.gamenu.carbondf.values.DFBlockTag;
@@ -182,13 +183,14 @@ public class CodeBlock extends Block {
                     || returned.getRealType() != DFItem.Type.VARIABLE
                     || !(returned instanceof DFVariable)
             ) {
-                throw new InvalidFieldException("First argument of a block with return values must be a variable");
+                throw new InvalidItemException("First argument of a block with return values must be a variable");
             }
 
             // Set the values of the variable for the action
             DFVariable var = (DFVariable) items().get(0);
             var.setValueType(action.getReturnValues());
         }
+
         return super.buildJSON();
     }
 

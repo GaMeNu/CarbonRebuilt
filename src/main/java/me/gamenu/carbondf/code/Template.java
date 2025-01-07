@@ -6,6 +6,7 @@ import me.gamenu.carbondf.blocks.DataBlock;
 import me.gamenu.carbondf.blocks.TemplateValue;
 import me.gamenu.carbondf.etc.DFBuildable;
 import me.gamenu.carbondf.exceptions.CarbonRuntimeException;
+import me.gamenu.carbondf.exceptions.InvalidBlockException;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import me.gamenu.carbondf.types.BlockType;
 import org.json.JSONArray;
@@ -14,7 +15,6 @@ import org.json.JSONObject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -27,11 +27,22 @@ public class Template extends BlocksList implements DFBuildable {
     }
 
     TemplateMetadata metadata;
+    TemplateManager tm;
 
-    Set<BlockType> validBlockTypes = Arrays.stream(TemplateType.values()).map(TemplateType::getBlockType).collect(Collectors.toSet());
-
+    /**
+     * Template metadata of the template, including its type, name, etc.
+     * @param metadata TemplateMetadata to set
+     */
     void setMetadata(TemplateMetadata metadata) {
         this.metadata = metadata;
+    }
+
+    /**
+     * Used for checking func calls and their existence
+     * @param tm TemplateManager that owns this template
+     */
+    void setTemplateManager(TemplateManager tm) {
+        this.tm = tm;
     }
 
     public TemplateMetadata getMetadata() {
@@ -55,25 +66,7 @@ public class Template extends BlocksList implements DFBuildable {
      */
     @Override
     public JSONObject buildJSON() {
-        // Make sure the first block is a CodeBlock
-        // (we can't have a bracket as the first Block)
-        if (!(blocks.get(0).getCategory() == TemplateValue.Category.BLOCK
-                && blocks.get(0) instanceof CodeBlock cb)
-        ) {
-            throw new InvalidFieldException(String.format("Block category \"%s\" is an invalid template starter type", blocks.get(0).getCategory().getId()));
-        }
-
-        // Make sure the first block is also a valid starter type
-        // (we must have a valid starter block as a starter type)
-        // (most of the code here is honestly just for the error message)
-        if (!validBlockTypes.contains(cb.getBlock())) {
-            throw new InvalidFieldException(String.format("Block ID \"%s\" is an invalid template starter type. Valid types: \"%s\"",
-                    cb.getBlock().getId(), validBlockTypes
-                            .stream()
-                            .map(BlockType::getId)
-                            .collect(Collectors.joining("\", \""))
-            ));
-        }
+        verifyStarterBlock();
 
         JSONArray blocksJSON = new JSONArray();
 
@@ -84,17 +77,64 @@ public class Template extends BlocksList implements DFBuildable {
             if (v.getCategory() == TemplateValue.Category.BLOCK) {
                 i++;
             }
+
+            if (v instanceof CodeBlock cb) {
+                verifyTemplateCalls(cb, i);
+            }
+
             try {
                 blocksJSON.put(v.buildJSON());
             } catch (CarbonRuntimeException e) {
                 if (v instanceof Block b)
-                    throw new CarbonRuntimeException(e.getMessage(), i, b);
+                    throw new CarbonRuntimeException(e.getMessage(), i, b, e);
                 else
                     throw e;
             }
         }
 
         return new JSONObject().put("blocks", blocksJSON);
+    }
+
+    private void verifyStarterBlock() {
+        // Make sure the first block is a CodeBlock
+        // (we can't have a bracket as the first Block)
+        if (!(blocks.get(0).getCategory() == TemplateValue.Category.BLOCK
+                && blocks.get(0) instanceof CodeBlock cb)
+        ) {
+            throw new InvalidBlockException(String.format("Block category \"%s\" is an invalid template starter type", blocks.get(0).getCategory().getId()));
+        }
+
+        // Make sure the first block is also a valid starter type
+        // (we must have a valid starter block as a starter type)
+        // (most of the code here is honestly just for the error message)
+        if (!templateStarters.contains(cb.getBlock())) {
+            throw new InvalidBlockException(String.format("Block ID \"%s\" is an invalid template starter type. Valid types: \"%s\"",
+                    cb.getBlock().getId(), templateStarters
+                            .stream()
+                            .map(BlockType::getId)
+                            .collect(Collectors.joining("\", \""))
+            ));
+        }
+    }
+
+
+    private void verifyTemplateCalls(CodeBlock block, int index) {
+        // Make sure the block is a data block
+        // (and thus is a caller. We already verify for starters in addBlock)
+        if (!(block instanceof DataBlock db)) return;
+
+        // Make sure called template exists
+        if (!tm.has(db.getName()))
+            throw new InvalidBlockException(String.format("Block attempts to call non-existent template \"%s\"", db.getName()), index, db);
+
+        // Make sure called template is of the matching type
+        BlockType templateBT = tm.get(db.getName()).getMetadata().getTemplateType().getBlockType();
+        BlockType callerBT = db.getBlock();
+        if (!templateBT.equals(callToTemplates.get(callerBT)))
+            throw new InvalidBlockException(String.format("Block attempts to call template \"%s\" of type %s, but is of type %s (which calls type %s)",
+                    db.getName(), templateBT.getId(), callerBT.getId(), callToTemplates.get(callerBT).getId())
+            );
+
     }
 
     // Overridden methods that return Templates instead of BlocksList for compat with assigning a stack to a variable
@@ -136,7 +176,7 @@ public class Template extends BlocksList implements DFBuildable {
         public static TemplateMetadata fromBlock(CodeBlock block) {
             TemplateType tt = TemplateType.fromID(block.getBlock().getId());
             if (tt == null) {
-                throw new InvalidFieldException(String.format("Block ID \"%s\" is an invalid template starter type. Valid types: \"%s\"",
+                throw new InvalidBlockException(String.format("Block ID \"%s\" is an invalid template starter type. Valid types: \"%s\"",
                         block.getBlock().getId(),
                         Arrays.stream(TemplateType.values())
                                 .map(type -> type.getBlockType().getId())

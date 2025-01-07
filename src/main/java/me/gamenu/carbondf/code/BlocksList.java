@@ -1,16 +1,22 @@
 package me.gamenu.carbondf.code;
 
-import me.gamenu.carbondf.blocks.Block;
-import me.gamenu.carbondf.blocks.Bracket;
-import me.gamenu.carbondf.blocks.ElseBlock;
-import me.gamenu.carbondf.blocks.TemplateValue;
+import me.gamenu.carbondf.blocks.*;
+import me.gamenu.carbondf.exceptions.InvalidBlockException;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import me.gamenu.carbondf.types.BlockType;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class BlocksList implements List<TemplateValue> {
+
+    Set<BlockType> templateStarters = Arrays.stream(Template.TemplateType.values()).map(Template.TemplateType::getBlockType).collect(Collectors.toSet());
+
+    Map<BlockType, BlockType> callToTemplates = Map.of(
+            BlockType.byID("call_func"),     BlockType.byID("func"),
+            BlockType.byID("start_process"), BlockType.byID("process")
+    );
 
     static final Set<BlockType> NORMAL_BRACKETS = Set.of(
             BlockType.byID("if_game"),
@@ -62,7 +68,7 @@ public class BlocksList implements List<TemplateValue> {
         } else if (REPEAT_BRACKETS.contains(block.getBlock())) {
             bType = Bracket.Type.REPEAT;
         } else {
-            throw new InvalidFieldException("BlockID \"" + block.getBlock().getId() + "\" does not have brackets");
+            throw new InvalidFieldException("BlockID \"" + block.getBlock().getId() + "\" cannot have brackets");
         }
 
         blocks.add(block);
@@ -74,6 +80,9 @@ public class BlocksList implements List<TemplateValue> {
     }
 
     public BlocksList addBlock(TemplateValue value) {
+        if (value instanceof CodeBlock cb && templateStarters.contains(cb.getBlock()))
+            throw new InvalidBlockException("Cannot use template starters in the middle of a template");
+
         add(value);
         return this;
     }

@@ -1,6 +1,7 @@
 package me.gamenu;
 
 import me.gamenu.carbondf.blocks.CodeBlock;
+import me.gamenu.carbondf.blocks.DataBlock;
 import me.gamenu.carbondf.blocks.Target;
 import me.gamenu.carbondf.code.BlocksList;
 import me.gamenu.carbondf.code.TemplateManager;
@@ -55,8 +56,10 @@ public class Main {
                                 .setTagOption("Rotation", "Remove rotation")
                                 .addItem(vm.typed("loc", DFVariable.Scope.LINE, DFItem.Type.LOCATION))
                                 .addItem(new DFGameValue("Location", Target.DEFAULT))
-                );
+                )
+                .addBlock(new DataBlock("start_process", "womp"));
 
+        tm.create(new DataBlock("process", "womp"));
         System.out.println(tm.get("Join").buildJSON().toString(0));
     }
 

@@ -11,8 +11,8 @@ public class DataBlock extends CodeBlock {
         this(BlockType.byID(blockID), name);
     }
 
-    public DataBlock(BlockType blockType, String name) {
-        super(blockType, ActionType.byName(blockType, "dynamic"));
+    public DataBlock(BlockType block, String name) {
+        super(block, ActionType.byName(block, "dynamic"));
         this.name = name;
     }
 
@@ -24,5 +24,10 @@ public class DataBlock extends CodeBlock {
     public JSONObject toJSON() {
         return super.toJSON()
                 .put("data", name);
+    }
+
+    @Override
+    public JSONObject buildJSON() {
+        return super.buildJSON().put("data", name);
     }
 }
