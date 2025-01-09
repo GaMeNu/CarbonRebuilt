@@ -1,7 +1,6 @@
 package me.gamenu;
 
-import me.gamenu.carbondf.blocks.CodeBlock;
-import me.gamenu.carbondf.blocks.DataBlock;
+import me.gamenu.carbondf.blocks.BlockFactory;
 import me.gamenu.carbondf.blocks.Target;
 import me.gamenu.carbondf.code.BlocksList;
 import me.gamenu.carbondf.code.TemplateManager;
@@ -13,53 +12,53 @@ public class Main {
         VarManager vm = tm.vars();
 
         tm
-                .create(new CodeBlock("event", "Join"))
-                .addBlock(new CodeBlock("player_action", "SendMessage"))
-                .addBlock(new CodeBlock("set_var", "=")
+                .create(BlockFactory.codeBlock("event", "Join"))
+                .addBlock(BlockFactory.codeBlock("player_action", "SendMessage"))
+                .addBlock(BlockFactory.codeBlock("set_var", "=")
                         .addItem(vm.typed("foo", DFVariable.Scope.GLOBAL, DFItem.Type.NUMBER))
                         .addItem(new DFNumber(100))
                 )
-                .addSubList(new CodeBlock("if_var", "=")
+                .addSubList(BlockFactory.codeBlock("if_var", "=")
                                 .addItem(vm.get("foo"))
                                 .addItem(new DFNumber(1)),
                         new BlocksList()
                                 .addBlock(
-                                        new CodeBlock("player_action", "SendMessage")
+                                        BlockFactory.codeBlock("player_action", "SendMessage")
                                                 .addItem(new DFStyledText("TRUE"))
                                 )
                 )
                 .elseBlock(new BlocksList()
                         .addBlock(
-                                new CodeBlock("player_action", "SendMessage")
+                                BlockFactory.codeBlock("player_action", "SendMessage")
                                         .addItem(new DFStyledText("FALSE!!! Prepare for your death >:)"))
                         )
-                        .addSubList(new CodeBlock("repeat", "While")
+                        .addSubList(BlockFactory.codeBlock("repeat", "While")
                                         .setSubAction("if_var", ">")
                                         .addItem(vm.get("foo"))
                                         .addItem(new DFNumber(1)),
                                 new BlocksList()
-                                        .addBlock(new CodeBlock("game_action", "Lightning")
+                                        .addBlock(BlockFactory.codeBlock("game_action", "Lightning")
                                                 .addItem(new DFGameValue("Location", Target.DEFAULT))
                                         )
-                                        .addBlock(new CodeBlock("player_action", "SendMessage")
+                                        .addBlock(BlockFactory.codeBlock("player_action", "SendMessage")
                                                 .addItem(new DFStyledText("Thou hast been <b>smitten</b>!"))
                                                 .setTagOption("Alignment Mode", "Centered")
                                         )
-                                        .addBlock(new CodeBlock("set_var", "-=")
+                                        .addBlock(BlockFactory.codeBlock("set_var", "-=")
                                                 .addItem(vm.get("foo"))
                                                 .addItem(new DFNumber(1))
                                         )
                         )
                 )
                 .addBlock(
-                        new CodeBlock("set_var", "AlignLoc")
+                        BlockFactory.codeBlock("set_var", "AlignLoc")
                                 .setTagOption("Rotation", "Remove rotation")
                                 .addItem(vm.typed("loc", DFVariable.Scope.LINE, DFItem.Type.LOCATION))
                                 .addItem(new DFGameValue("Location", Target.DEFAULT))
                 )
-                .addBlock(new DataBlock("start_process", "womp"));
+                .addBlock(BlockFactory.dataBlock("start_process", "womp"));
 
-        tm.create(new DataBlock("process", "womp"));
+        tm.create(BlockFactory.dataBlock("process", "womp"));
         System.out.println(tm.get("Join").buildJSON().toString(0));
     }
 

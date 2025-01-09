@@ -240,6 +240,8 @@ public class DFParameter extends DFItem {
                 throw new InvalidFieldException("Returned parameters cannot be optional or plural");
             }
 
+            // Do NOT mess with the name of the variable.
+            // The name has to MATCH the parameter's name.
             if (vm.has(name)) {
                 throw new DuplicateEntryException(String.format("Variable name \"%s\" already exists", name));
             }
@@ -281,7 +283,7 @@ public class DFParameter extends DFItem {
      * This saves the instance of the variable matching the parameter,
      * so that {@link DFParameter#getVariable()} always returns the same instance
      */
-    DFVariable matchingVar;
+    DFVariable variable;
 
     /**
      * This is an internal constructor for the DFParameter class.
@@ -300,7 +302,7 @@ public class DFParameter extends DFItem {
     protected DFParameter(
             String name,
             String description,
-            DFVariable matchingVar,
+            DFVariable variable,
             TypeSet types,
             boolean plural,
             boolean optional,
@@ -311,7 +313,7 @@ public class DFParameter extends DFItem {
         super(Type.PARAMETER);
         this.name = name;
         this.description = description;
-        this.matchingVar = matchingVar;
+        this.variable = variable;
         this.paramTypes = types;
         this.plural = plural;
         this.optional = optional;
@@ -321,12 +323,28 @@ public class DFParameter extends DFItem {
     }
 
     /**
+     * Get the parameter's name
+     * @return the parameter's name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Get the parameter's description
+     * @return the parameter's description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
      * Returns the matching LINE variable built for this parameter
      *
      * @return the matching variable for this parameter
      */
     public DFVariable getVariable() {
-        return matchingVar;
+        return variable;
     }
 
     /**
@@ -335,6 +353,22 @@ public class DFParameter extends DFItem {
      */
     public TypeSet getParamTypes() {
         return paramTypes;
+    }
+
+    /**
+     * Get whether this parameter is a plural parameter
+     * @return whether this parameter is plural
+     */
+    public boolean isPlural() {
+        return plural;
+    }
+
+    /**
+     * Get whether this parameter is an optional parameter
+     * @return whether this parameter is an optional parameter
+     */
+    public boolean isOptional() {
+        return optional;
     }
 
     /**
@@ -350,6 +384,42 @@ public class DFParameter extends DFItem {
         if (returned) return Type.VARIABLE;
         if (paramTypes.size() == 1) return paramTypes.stream().toList().get(0);
         return Type.ANY;
+    }
+
+    /**
+     * Get whether this is a returned parameter (A Parameter with a type of VARIABLE)
+     * @return whether this is a returned parameter
+     */
+    public boolean isReturned() {
+        return returned;
+    }
+
+    /**
+     * <p>Get whether this parameter is type-checked.</p>
+     *
+     * <p>
+     *     Result should be the same as
+     *     <code>
+     *         {@link DFParameter#getVariable()}.{@link DFVariable#getVarKind()} == {@link DFVariable.VarKind#TYPED}
+     *     </code>
+     * </p>
+     *
+     * @return Whether this parameter is typed checked
+     */
+    public boolean isTypeChecked() {
+        return typeChecked;
+    }
+
+    /**
+     * <p>Returns the parameter's default value.</p>
+     *
+     * <p>
+     *     Parameters may only have a default value if they are optional AND NOT plural
+     * </p>
+     * @return the parameter's default value
+     */
+    public DFItem getDefaultValue() {
+        return defaultValue;
     }
 
     /**

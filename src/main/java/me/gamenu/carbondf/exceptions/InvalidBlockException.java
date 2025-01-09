@@ -1,6 +1,6 @@
 package me.gamenu.carbondf.exceptions;
 
-import me.gamenu.carbondf.blocks.Block;
+import me.gamenu.carbondf.blocks.IBlock;
 
 public class InvalidBlockException extends CarbonRuntimeException {
   public InvalidBlockException() {
@@ -10,11 +10,11 @@ public class InvalidBlockException extends CarbonRuntimeException {
     super(message);
   }
 
-  public InvalidBlockException(String message, int blockIndex, Block block) {
+  public InvalidBlockException(String message, int blockIndex, IBlock block) {
     super(message, blockIndex, block);
   }
 
-  public InvalidBlockException(String message, int blockIndex, Block block, Throwable cause) {
+  public InvalidBlockException(String message, int blockIndex, IBlock block, Throwable cause) {
     super(message, blockIndex, block, cause);
   }
 

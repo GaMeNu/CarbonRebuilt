@@ -1,10 +1,8 @@
 package me.gamenu.carbondf.blocks;
 
-import me.gamenu.carbondf.types.ActionType;
-import me.gamenu.carbondf.types.BlockType;
 import org.json.JSONObject;
 
-public class DataBlock extends CodeBlock {
+public class DataBlock extends CodeBlock implements IDataBlock {
     String name;
 
     public DataBlock(String blockID, String name) {

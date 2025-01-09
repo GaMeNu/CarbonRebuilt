@@ -1,9 +1,31 @@
 package me.gamenu.carbondf.blocks;
 
-import me.gamenu.carbondf.types.BlockType;
+import org.json.JSONObject;
 
-public class ElseBlock extends Block {
+public class ElseBlock implements IBlock {
+    BlockType block;
+    Category category;
+
+
     public ElseBlock() {
-        super(BlockType.byID("else"));
+        this.category = Category.BLOCK;
+        this.block = BlockType.byID("else");
+    }
+
+    @Override
+    public BlockType getBlock() {
+        return block;
+    }
+
+    @Override
+    public Category getCategory() {
+        return category;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        return new JSONObject()
+                .put("id", category.getId())
+                .put("block", block.getId());
     }
 }

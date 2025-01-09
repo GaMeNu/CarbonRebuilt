@@ -18,7 +18,7 @@ public class DFVariable extends DFItem {
     /**
      * Type(s) of the current variable
      */
-    private final TypeSet valueTypes;
+    private TypeSet valueTypes;
 
     /**
      * Internal value of the variable
@@ -153,11 +153,11 @@ public class DFVariable extends DFItem {
 
         this.runtimeType = typeToSet;
 
-        // Make sure we add this, because now this dynamic variable can contain this new type
+        // Make sure we do this, because now this dynamic variable contains these new types
         // (This will be used for type safety if we want to go from Dynamic to Typed, even though
         // the two should not be mixed together.)
         if (varKind == VarKind.DYNAMIC && !valueTypes.contains(typeToSet))
-            this.valueTypes.add(typeToSet);
+            this.valueTypes = new TypeSet(typeToSet);
 
         return this;
     }
@@ -178,6 +178,12 @@ public class DFVariable extends DFItem {
         if (typesToSet.size() == 1) {
             // Attempt to operate on given wrapped type as if it were a RUNTIME type, since it's non-ambiguous
             return setValueType(typesToSet.stream().toList().get(0));
+        }
+
+        if (getVarKind() == VarKind.DYNAMIC) {
+            this.runtimeType = null;
+            this.valueTypes = typesToSet;
+            return this;
         }
 
         if (getType().containsAll(typesToSet)) {

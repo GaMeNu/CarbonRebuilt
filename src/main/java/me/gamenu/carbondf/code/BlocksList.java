@@ -3,7 +3,7 @@ package me.gamenu.carbondf.code;
 import me.gamenu.carbondf.blocks.*;
 import me.gamenu.carbondf.exceptions.InvalidBlockException;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
-import me.gamenu.carbondf.types.BlockType;
+import me.gamenu.carbondf.blocks.BlockType;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -56,12 +56,12 @@ public class BlocksList implements List<TemplateValue> {
         return this;
     }
 
-    public BlocksList addSubList(Block block, Supplier<BlocksList> subListSupplier) {
+    public BlocksList addSubList(IBlock block, Supplier<BlocksList> subListSupplier) {
         addSubList(block, subListSupplier.get());
         return this;
     }
 
-    public BlocksList addSubList(Block block, BlocksList subList) {
+    public BlocksList addSubList(IBlock block, BlocksList subList) {
         Bracket.Type bType;
         if (NORMAL_BRACKETS.contains(block.getBlock())) {
             bType = Bracket.Type.NORMAL;

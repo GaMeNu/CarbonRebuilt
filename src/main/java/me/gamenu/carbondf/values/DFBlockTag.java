@@ -2,8 +2,8 @@ package me.gamenu.carbondf.values;
 
 import me.gamenu.carbondf.etc.DBCUtils;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
-import me.gamenu.carbondf.types.ActionType;
-import me.gamenu.carbondf.types.BlockType;
+import me.gamenu.carbondf.blocks.ActionType;
+import me.gamenu.carbondf.blocks.BlockType;
 import org.json.JSONObject;
 
 import java.util.ArrayList;

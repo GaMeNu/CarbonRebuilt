@@ -3,24 +3,15 @@ package me.gamenu.carbondf.blocks;
 import me.gamenu.carbondf.etc.DFBuildable;
 import org.json.JSONObject;
 
-public abstract class TemplateValue implements DFBuildable {
+public interface TemplateValue extends DFBuildable {
 
-    Category category;
 
-    public TemplateValue(Category cat) {
-        this.category = cat;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
+    Category getCategory();
 
     @Override
-    public JSONObject toJSON() {
-        return new JSONObject().put("id", category.getId());
-    }
+    JSONObject toJSON();
 
-    public enum Category {
+    enum Category {
         BLOCK("block"),
         BRACKET("bracket")
         ;

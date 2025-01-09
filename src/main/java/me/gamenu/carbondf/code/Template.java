@@ -1,6 +1,6 @@
 package me.gamenu.carbondf.code;
 
-import me.gamenu.carbondf.blocks.Block;
+import me.gamenu.carbondf.blocks.IBlock;
 import me.gamenu.carbondf.blocks.CodeBlock;
 import me.gamenu.carbondf.blocks.DataBlock;
 import me.gamenu.carbondf.blocks.TemplateValue;
@@ -8,7 +8,7 @@ import me.gamenu.carbondf.etc.DFBuildable;
 import me.gamenu.carbondf.exceptions.CarbonRuntimeException;
 import me.gamenu.carbondf.exceptions.InvalidBlockException;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
-import me.gamenu.carbondf.types.BlockType;
+import me.gamenu.carbondf.blocks.BlockType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -85,7 +85,7 @@ public class Template extends BlocksList implements DFBuildable {
             try {
                 blocksJSON.put(v.buildJSON());
             } catch (CarbonRuntimeException e) {
-                if (v instanceof Block b)
+                if (v instanceof IBlock b)
                     throw new CarbonRuntimeException(e.getMessage(), i, b, e);
                 else
                     throw e;
@@ -135,6 +135,8 @@ public class Template extends BlocksList implements DFBuildable {
                     db.getName(), templateBT.getId(), callerBT.getId(), callToTemplates.get(callerBT).getId())
             );
 
+
+
     }
 
     // Overridden methods that return Templates instead of BlocksList for compat with assigning a stack to a variable
@@ -146,13 +148,13 @@ public class Template extends BlocksList implements DFBuildable {
     }
 
     @Override
-    public Template addSubList(Block block, BlocksList subList) {
+    public Template addSubList(IBlock block, BlocksList subList) {
         super.addSubList(block, subList);
         return this;
     }
 
     @Override
-    public BlocksList addSubList(Block block, Supplier<BlocksList> subListSupplier) {
+    public BlocksList addSubList(IBlock block, Supplier<BlocksList> subListSupplier) {
         super.addSubList(block, subListSupplier);
         return this;
     }

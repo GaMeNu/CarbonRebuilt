@@ -1,10 +1,11 @@
 package me.gamenu.carbondf.exceptions;
 
-import me.gamenu.carbondf.blocks.Block;
+import me.gamenu.carbondf.blocks.IBlock;
 import me.gamenu.carbondf.blocks.CodeBlock;
+import me.gamenu.carbondf.blocks.TemplateValue;
 
 public class CarbonRuntimeException extends RuntimeException {
-    Block block;
+    IBlock block;
     int blockIndex;
 
     public CarbonRuntimeException() {
@@ -14,11 +15,11 @@ public class CarbonRuntimeException extends RuntimeException {
         this(message, -1, null);
     }
 
-    public CarbonRuntimeException(String message, int blockIndex, Block block) {
+    public CarbonRuntimeException(String message, int blockIndex, IBlock block) {
         this(message, blockIndex, block, null);
     }
 
-    public CarbonRuntimeException(String message, int blockIndex, Block block, Throwable cause) {
+    public CarbonRuntimeException(String message, int blockIndex, IBlock block, Throwable cause) {
         super(message, cause);
         this.block = block;
         this.blockIndex = blockIndex;
@@ -46,7 +47,7 @@ public class CarbonRuntimeException extends RuntimeException {
 
         msg += "\n at block " + blockIndex;
         // We don't have a Block defined yet
-        if (block == null) {
+        if (block == null || block.getCategory() != TemplateValue.Category.BLOCK) {
             return msg;
         }
 

@@ -6,8 +6,9 @@ import org.json.JSONObject;
  * Represents a DiamondFire Bracket.
  * Brackets wrap a smaller SubList of blocks, usually after IF or REPEAT blocks.
  */
-public class Bracket extends TemplateValue {
+public class Bracket implements TemplateValue {
 
+    Category category;
     Type type;
     Direction direction;
 
@@ -17,14 +18,20 @@ public class Bracket extends TemplateValue {
      * @param direction {@link Bracket.Direction Direction} of the bracket
      */
     public Bracket(Type type, Direction direction) {
-        super(Category.BRACKET);
+        this.category = Category.BRACKET;
         this.type = type;
         this.direction = direction;
     }
 
     @Override
+    public Category getCategory() {
+        return category;
+    }
+
+    @Override
     public JSONObject toJSON() {
-        return super.toJSON()
+        return new JSONObject()
+                .put("id", category.getId())
                 .put("type", type.getId())
                 .put("direct", direction.getId());
     }
