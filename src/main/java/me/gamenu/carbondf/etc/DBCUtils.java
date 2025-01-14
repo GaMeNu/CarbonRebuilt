@@ -51,6 +51,13 @@ public class DBCUtils {
      */
     public static final Map<String, Map<String, Map<String, JSONObject>>> tagsMap = new HashMap<>();
 
+    public static final Set<String> dataBlocksIDs = Set.of(
+            "call_func",
+            "func",
+            "start_process",
+            "process"
+    );
+
 
     /**
      * Remove colors from a DBC name that may contain colors

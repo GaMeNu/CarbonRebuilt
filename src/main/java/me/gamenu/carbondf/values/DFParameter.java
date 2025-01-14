@@ -1,5 +1,6 @@
 package me.gamenu.carbondf.values;
 
+import me.gamenu.carbondf.exceptions.CarbonRuntimeException;
 import me.gamenu.carbondf.exceptions.DuplicateEntryException;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
 import me.gamenu.carbondf.exceptions.TypeException;
@@ -429,7 +430,20 @@ public class DFParameter extends DFItem {
      */
     public boolean canAcceptItem(DFItem other) {
         // Return parameters may only accept variables
-        if (this.returned) return other.getRealType() == Type.VARIABLE;
+        if (this.returned) {
+            // The accepted item must be a variable, that can be assigned the res value
+            if (other.getRealType() != Type.VARIABLE || !(other instanceof DFVariable var)) return false;
+
+            switch (var.getVarKind()) {
+                case CONSTANT: return false;
+                case DYNAMIC:  return true;
+                case TYPED:    break;
+                default:       throw new CarbonRuntimeException("Um... what.");
+            }
+        }
+
+        if (!this.isTypeChecked())
+            return true;
 
         // Check if the other item is simply acceptable
         return this.getParamTypes().canAcceptType(other.getType());

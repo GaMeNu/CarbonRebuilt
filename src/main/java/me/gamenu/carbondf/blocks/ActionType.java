@@ -25,13 +25,18 @@ public class ActionType {
      * @return the requested ActionType (null if not found)
      */
     public static ActionType byName(BlockType blockType, String name) {
-        Map<String, ActionType> cbActs = actionTypes.get(blockType);
-        if (cbActs == null)
-            throw new InvalidFieldException("Cannot get ActionType of name \"" + name + "\"");
-        ActionType res =  cbActs.get(name);
+        ActionType res =  getByName(blockType, name);
         if (res == null)
             throw new InvalidFieldException("Cannot get ActionType of name \"" + name + "\"");
         return res;
+    }
+
+    public static ActionType getByName(BlockType blockType, String name) {
+        Map<String, ActionType> cbActs = actionTypes.get(blockType);
+        if (cbActs == null)
+            return null;
+
+        return cbActs.get(name);
     }
 
     /**
@@ -42,6 +47,10 @@ public class ActionType {
      */
     public static ActionType byName(String blockID, String name) {
         return byName(BlockType.byID(blockID), name);
+    }
+
+    public static ActionType getByName(String blockID, String name) {
+        return getByName(BlockType.byID(blockID), name);
     }
 
     static {

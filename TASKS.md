@@ -1,20 +1,21 @@
 # Planned Features and Tasks for CarbonDF Library
 
 ### Planned
-| **Feature**                       | **Status**                                         |
-|-----------------------------------|----------------------------------------------------|
-| DiamondFire code values           | DONE                                               |
-| Variables, parameters             | DONE                                               |
-| Type System                       | Variables, Parameters, Builtins returnValues       |
-| Code blocks                       | Mostly Done<br/>(need to add support for dynamics) |
-| Code actions                      | Mostly Done<br/>(dynamics)                         |
-| Block Tags                        | DONE                                               |
-| Return system                     | Support for PARAMETERS only                        |
-| SubAction blocks                  | DONE                                               |
-| Global token center (vars, funcs) | DONE                                               |
-| Params + Rets for Funcs           |                                                    |
-| Apply Type System to funcCalls    |                                                    |
-| Templates                         | DONE (hopefully?)                                  |
+| **Feature**                       | **Status**                                   |
+|-----------------------------------|----------------------------------------------|
+| DiamondFire code values           | DONE                                         |
+| Variables, parameters             | DONE                                         |
+| Type System                       | Variables, Parameters, Builtins returnValues |
+| Code blocks                       | Mostly Done                                  |
+| Code actions                      | Mostly Done                                  |
+| Block Tags                        | DONE                                         |
+| Return system                     | Support for PARAMETERS only                  |
+| SubAction blocks                  | DONE                                         |
+| Global token center (vars, funcs) | DONE                                         |
+| Params + Rets for Funcs           | DONE                                         |
+| Apply Type System to funcCalls    | DONE                                         |
+| Templates                         | DONE                                         |
+| Set type of return vars           |                                              |
 
 ### Ideas
 | **Feature**                                  | **Status** | **Notes**                                                                                                                                                                                                                                                                                             |

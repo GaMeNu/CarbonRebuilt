@@ -1,14 +1,10 @@
 package me.gamenu.carbondf.code;
 
-import me.gamenu.carbondf.blocks.IBlock;
-import me.gamenu.carbondf.blocks.CodeBlock;
-import me.gamenu.carbondf.blocks.DataBlock;
-import me.gamenu.carbondf.blocks.TemplateValue;
+import me.gamenu.carbondf.blocks.*;
 import me.gamenu.carbondf.etc.DFBuildable;
 import me.gamenu.carbondf.exceptions.CarbonRuntimeException;
 import me.gamenu.carbondf.exceptions.InvalidBlockException;
 import me.gamenu.carbondf.exceptions.InvalidFieldException;
-import me.gamenu.carbondf.blocks.BlockType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -26,8 +22,8 @@ public class Template extends BlocksList implements DFBuildable {
         super();
     }
 
-    TemplateMetadata metadata;
     TemplateManager tm;
+    TemplateMetadata metadata;
 
     /**
      * Template metadata of the template, including its type, name, etc.
@@ -66,6 +62,7 @@ public class Template extends BlocksList implements DFBuildable {
      */
     @Override
     public JSONObject buildJSON() {
+        // TODO: This is bad -- verification and building the JSON itself are done in the same pass.
         verifyStarterBlock();
 
         JSONArray blocksJSON = new JSONArray();
@@ -78,7 +75,7 @@ public class Template extends BlocksList implements DFBuildable {
                 i++;
             }
 
-            if (v instanceof CodeBlock cb) {
+            if (v instanceof IDataBlock cb) {
                 verifyTemplateCalls(cb, i);
             }
 
@@ -98,12 +95,12 @@ public class Template extends BlocksList implements DFBuildable {
     private void verifyStarterBlock() {
         // Make sure the first block is a CodeBlock
         // (we can't have a bracket as the first Block)
-        if (!(blocks.get(0).getCategory() == TemplateValue.Category.BLOCK
-                && blocks.get(0) instanceof CodeBlock cb)
+        if (
+                !(blocks.get(0).getCategory() == TemplateValue.Category.BLOCK
+                        && blocks.get(0) instanceof IBlock cb)
         ) {
             throw new InvalidBlockException(String.format("Block category \"%s\" is an invalid template starter type", blocks.get(0).getCategory().getId()));
         }
-
         // Make sure the first block is also a valid starter type
         // (we must have a valid starter block as a starter type)
         // (most of the code here is honestly just for the error message)
@@ -118,23 +115,29 @@ public class Template extends BlocksList implements DFBuildable {
     }
 
 
-    private void verifyTemplateCalls(CodeBlock block, int index) {
+    private void verifyTemplateCalls(IBlock block, int index) {
         // Make sure the block is a data block
         // (and thus is a caller. We already verify for starters in addBlock)
-        if (!(block instanceof DataBlock db)) return;
+        if (!(block instanceof IDataBlock db)) return;
 
         // Make sure called template exists
         if (!tm.has(db.getName()))
             throw new InvalidBlockException(String.format("Block attempts to call non-existent template \"%s\"", db.getName()), index, db);
 
         // Make sure called template is of the matching type
-        BlockType templateBT = tm.get(db.getName()).getMetadata().getTemplateType().getBlockType();
+        TemplateMetadata metadata = tm.get(db.getName()).getMetadata();
+        BlockType templateBT = metadata.getTemplateType().getBlockType();
         BlockType callerBT = db.getBlock();
         if (!templateBT.equals(callToTemplates.get(callerBT)))
             throw new InvalidBlockException(String.format("Block attempts to call template \"%s\" of type %s, but is of type %s (which calls type %s)",
                     db.getName(), templateBT.getId(), callerBT.getId(), callToTemplates.get(callerBT).getId())
             );
 
+        if (templateBT.equals(TemplateType.FUNC.getBlockType())) {
+            if (!(block instanceof CallFuncBlock caller))
+                throw new InvalidBlockException("CallFunc block isn't a DataBlock");
+            metadata.getParamsContainer().verifyArgs(caller.getArgs());
+        }
 
 
     }
@@ -174,6 +177,30 @@ public class Template extends BlocksList implements DFBuildable {
     public static class TemplateMetadata {
         String name;
         TemplateType templateType;
+        FuncBlock.ParamsContainer paramsContainer;
+
+        public static TemplateMetadata fromBlock(FuncBlock block) {
+            TemplateType tt = TemplateType.fromID(block.getBlock().getId());
+            if (tt == null) {
+                throw new InvalidBlockException(String.format("Block ID \"%s\" is an invalid template starter type. Valid types: \"%s\"",
+                        block.getBlock().getId(),
+                        Arrays.stream(TemplateType.values())
+                                .map(type -> type.getBlockType().getId())
+                                .collect(Collectors.joining("\", \""))
+                ));
+            }
+            if (tt != TemplateType.FUNC) {
+                throw new InvalidBlockException("FuncBlocks must be of type FUNC");
+            }
+
+            String templateName = block.getName();
+
+
+            TemplateMetadata res = new TemplateMetadata(templateName, tt);
+            res.setParamsContainer(block.getArgs());
+            return res;
+
+        }
 
         public static TemplateMetadata fromBlock(CodeBlock block) {
             TemplateType tt = TemplateType.fromID(block.getBlock().getId());
@@ -201,12 +228,20 @@ public class Template extends BlocksList implements DFBuildable {
             this.templateType = templateType;
         }
 
+        public void setParamsContainer(FuncBlock.ParamsContainer paramsContainer) {
+            this.paramsContainer = paramsContainer;
+        }
+
         public String getName() {
             return name;
         }
 
         public TemplateType getTemplateType() {
             return templateType;
+        }
+
+        public FuncBlock.ParamsContainer getParamsContainer() {
+            return paramsContainer;
         }
     }
 

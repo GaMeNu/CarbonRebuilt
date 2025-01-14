@@ -8,7 +8,7 @@ import org.json.JSONObject;
 import java.util.List;
 import java.util.Set;
 
-interface IBlockArgs extends DFBuildable {
+public interface IBlockArgs extends DFBuildable {
     int ARGS_CONTAINER_SIZE = 27;
 
     /**

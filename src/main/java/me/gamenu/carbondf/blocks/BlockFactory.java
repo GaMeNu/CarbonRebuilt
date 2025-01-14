@@ -25,4 +25,8 @@ public class BlockFactory {
         return new FuncBlock(name);
     }
 
+    public static CallFuncBlock callFuncBlock(String name) {
+        return new CallFuncBlock(name);
+    }
+
 }

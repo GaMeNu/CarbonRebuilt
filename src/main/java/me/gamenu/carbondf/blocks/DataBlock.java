@@ -11,6 +11,7 @@ public class DataBlock extends CodeBlock implements IDataBlock {
 
     public DataBlock(BlockType block, String name) {
         super(block, ActionType.byName(block, "dynamic"));
+        verifyNamedBlocks(name);
         this.name = name;
     }
 

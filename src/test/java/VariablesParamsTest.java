@@ -40,6 +40,26 @@ public class VariablesParamsTest {
     }
 
     @Test
+    void returnParamAccepts() {
+        TemplateManager tm = new TemplateManager();
+        VarManager vm = tm.vars();
+
+        DFParameter testParam = vm.param("testParam", DFItem.Type.NUMBER)
+                .setReturned(true)
+                .build();
+
+        DFVariable test = vm.typed("test", DFVariable.Scope.LINE, DFItem.Type.NUMBER);
+        DFVariable test2 = vm.dynamic("test2", DFVariable.Scope.LINE)
+                .setValue(new DFNumber(1));
+        assertTrue(testParam.canAcceptItem(test));
+        assertTrue(testParam.canAcceptItem(test2));
+
+        test2.setValue(new DFString("a"));
+        assertFalse(testParam.canAcceptItem(test2));
+        assertFalse(testParam.canAcceptItem(new DFNumber(1)));
+    }
+
+    @Test
     void buildParamVars() {
         TemplateManager tm = new TemplateManager();
         VarManager vm = tm.vars();
